@@ -155,7 +155,45 @@
       msg.textContent = err.message;
     }
   });
+    const msg1 = document.getElementById("registerMessage");
+
+function showMessage(text, type = "success") {
+    msg.innerText = text;
+    msg.style.display = "block";
+    msg.style.color = type === "success" ? "green" : "red";
+}
+
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    msg.innerText = "";
+
+    const formData = new FormData(form);
+    const email = formData.get("email");
+    const password = formData.get("password");
+    const confirmPassword = formData.get("confirm_password");
+
+    if (password !== confirmPassword) {
+        showMessage("Passwords do not match!", "error");
+        return;
+    }
+
+    try {
+        const userCred = await createUserWithEmailAndPassword(auth, email, password);
+
+        showMessage("Account created successfully! Redirecting to login...", "success");
+
+        // 🔥 Redirect after message shows
+        setTimeout(() => {
+            window.location.href = "login.html";
+        }, 2000);
+
+    } catch (err) {
+        showMessage(err.message, "error");
+    }
+});
+
 </script>
 
 </body>
 </html>
+
