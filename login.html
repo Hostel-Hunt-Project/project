@@ -110,7 +110,7 @@
       msg.textContent = err.message;
     }
   });
- const msg1 = document.getElementById("loginMessage");
+  const msg1 = document.getElementById("loginMessage");
 
 function showMessage(text, type = "success") {
     msg.innerText = text;
@@ -120,7 +120,7 @@ function showMessage(text, type = "success") {
 
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    msg1.innerText = "";
+    msg.innerText = "";
 
     const formData = new FormData(form);
     const email = formData.get("email");
@@ -146,7 +146,3 @@ form.addEventListener("submit", async (e) => {
 
 </body>
 </html>
-
-
-
-
