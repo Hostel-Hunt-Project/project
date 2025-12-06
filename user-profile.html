@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Your Profile – Hostel Hunt</title>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    .profile-box {
+      width: 420px;
+      margin: 60px auto;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    }
+    .profile-pic {
+      width: 120px;
+      height:120px;
+      border-radius: 50%;
+      background: #ddd;
+      margin: auto;
+      margin-bottom: 15px;
+    }
+    .profile-title {
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .details-box {
+      margin-top: 15px;
+      text-align: left;
+    }
+    .details-box p{
+      margin: 8px 0;
+      font-size: 14px;
+    }
+    .btn-edit {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 8px 14px;
+      background: #2563eb;
+      color: white;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Hostel Hunt</div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="profile.html" class="btn">Edit Profile</a>
+    <a href="#" id="logoutBtn" class="btn">Logout</a>
+  </nav>
+</header>
+
+<div class="profile-box">
+
+  <!-- Photo Placeholder -->
+  <div class="profile-pic" id="photoBox"></div>
+
+  <h3 class="profile-title" id="userName">Loading...</h3>
+
+  <div class="details-box" id="detailsArea"></div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAOKTqpJmN-43fDQrZVmfGCVlK_8JBTrvY",
+    authDomain: "hostelhunt-1df83.firebaseapp.com",
+    projectId: "hostelhunt-1df83",
+    storageBucket: "hostelhunt-1df83.firebasestorage.app",
+    messagingSenderId: "272376261500",
+    appId: "1:272376261500:web:719ada3e6b22090c5b12f9",
+    measurementId: "G-0G66K64YFS"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const nameLabel = document.getElementById("userName");
+  const detailBox = document.getElementById("detailsArea");
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    const docRef = doc(db, "users", user.uid);
+    const snap = await getDoc(docRef);
+
+    if (snap.exists()) {
+      const data = snap.data();
+
+      nameLabel.textContent = data.name;
+
+      detailBox.innerHTML = `
+        <p><strong>Email:</strong> ${data.email}</p>
+        <p><strong>Phone:</strong> ${data.phone}</p>
+        <p><strong>College:</strong> ${data.collegeName}</p>
+        <p><strong>Gender:</strong> ${data.gender}</p>
+        <p><strong>Role:</strong> ${data.role}</p>
+      `;
+    }
+  })
+
+  document.getElementById("logoutBtn").onclick = async () => {
+    await signOut(auth);
+    window.location.href = "login.html";
+  };
+</script>
+
+</body>
+</html>
