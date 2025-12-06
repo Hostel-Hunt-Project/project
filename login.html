@@ -113,9 +113,9 @@
  const msg1 = document.getElementById("loginMessage");
 
 function showMessage(text, type = "success") {
-    msg1.innerText = text;
-    msg1.style.display = "block";
-    msg1.style.color = type === "success" ? "green" : "red";
+    msg.innerText = text;
+    msg.style.display = "block";
+    msg.style.color = type === "success" ? "green" : "red";
 }
 
 form.addEventListener("submit", async (e) => {
@@ -146,6 +146,7 @@ form.addEventListener("submit", async (e) => {
 
 </body>
 </html>
+
 
 
 
