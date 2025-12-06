@@ -84,8 +84,7 @@
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
   import {
     getAuth,
-    createUserWithEmailAndPassword,
-    onAuthStateChanged
+    createUserWithEmailAndPassword
   } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
   import {
     getFirestore,
@@ -122,16 +121,6 @@
     else if (type === "error") msg.style.color = "red";
     else msg.style.color = "blue";
   }
-
-  // 🔁 If already logged-in → show message + redirect to login
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      showMessage("You are already registered! Redirecting to login page...", "info");
-      setTimeout(() => {
-        window.location.href = "login.html";
-      }, 2000);
-    }
-  });
 
   // 📝 Signup form submit
   form.addEventListener("submit", async (e) => {
@@ -174,24 +163,21 @@
         window.location.href = "login.html";
       }, 2000);
     } catch (err) {
-  console.error(err);
+      console.error(err);
 
-  if (err.code === "auth/email-already-in-use") {
-    // ✅ Custom message + redirect to login page
-    msg.style.color = "blue";
-    msg.textContent = "This email is already registered. Redirecting to login page...";
-    setTimeout(() => {
-      window.location.href = "login.html";
-    }, 2000);
-  } else {
-    // ❌ Baaki sab errors normal tarike se dikhao
-    msg.style.color = "red";
-    msg.textContent = "Firebase error: " + err.message;
-  }
-}
+      // 👇 Special case: email already in use
+      if (err.code === "auth/email-already-in-use") {
+        showMessage("This email is already registered. Redirecting to login page...", "info");
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 2000);
+      } else {
+        showMessage("Firebase error: " + err.message, "error");
+      }
     }
-  );
+  });
 </script>
+
 
 </body>
 </html>
