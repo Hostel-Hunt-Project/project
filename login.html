@@ -110,17 +110,17 @@
       msg.textContent = err.message;
     }
   });
- const msg = document.getElementById("loginMessage");
+ const msg1 = document.getElementById("loginMessage");
 
 function showMessage(text, type = "success") {
-    msg.innerText = text;
-    msg.style.display = "block";
-    msg.style.color = type === "success" ? "green" : "red";
+    msg1.innerText = text;
+    msg1.style.display = "block";
+    msg1.style.color = type === "success" ? "green" : "red";
 }
 
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    msg.innerText = "";
+    msg1.innerText = "";
 
     const formData = new FormData(form);
     const email = formData.get("email");
@@ -146,5 +146,6 @@ form.addEventListener("submit", async (e) => {
 
 </body>
 </html>
+
 
 
