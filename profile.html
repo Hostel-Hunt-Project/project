@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Profile – Hostel Hunt</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">Hostel Hunt</div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="#" id="logoutBtn" class="btn">Logout</a>
+  </nav>
+</header>
+
+<div class="form-page">
+  <h2>Your Profile</h2>
+  <p class="small">View or update your information.</p>
+
+  <form id="profileForm">
+    <input type="text" id="name" required placeholder="Full Name">
+    <input type="email" id="email" disabled>
+    <input type="text" id="phone" placeholder="Phone Number">
+    <input type="text" id="college" placeholder="College / University">
+    <select id="gender">
+      <option value="">Select gender</option>
+      <option value="male">male</option>
+      <option value="female">female</option>
+      <option value="other">other</option>
+    </select>
+    <button class="btn-primary" type="submit">Update Profile</button>
+  </form>
+
+  <p id="profileMessage" class="small"></p>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+  import { 
+    getFirestore, 
+    doc, 
+    getDoc, 
+    setDoc          // ✅ yeh naya import
+  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAOKTqpJmN-43fDQrZVmfGCVlK_8JBTrvY",
+    authDomain: "hostelhunt-1df83.firebaseapp.com",
+    projectId: "hostelhunt-1df83",
+    storageBucket: "hostelhunt-1df83.firebasestorage.app",
+    messagingSenderId: "272376261500",
+    appId: "1:272376261500:web:719ada3e6b22090c5b12f9",
+    measurementId: "G-0G66K64YFS"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  const form = document.getElementById("profileForm");
+  const msg  = document.getElementById("profileMessage");
+
+  function showMessage(text, color){
+    msg.style.color = color;
+    msg.innerText = text;
+  }
+
+  // ✅ Profile data load
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    try {
+      const docRef = doc(db, "users", user.uid);
+      const snap   = await getDoc(docRef);
+
+      if (snap.exists()) {
+        const data = snap.data();
+        document.getElementById("name").value    = data.name || "";
+        document.getElementById("email").value   = data.email || user.email || "";
+        document.getElementById("phone").value   = data.phone || "";
+        document.getElementById("college").value = data.collegeName || "";
+        document.getElementById("gender").value  = data.gender || "";
+      } else {
+        // doc nahi hai → user details bhar sakta hai
+        document.getElementById("email").value = user.email || "";
+        showMessage("No profile data found, please fill and save.", "blue");
+      }
+    } catch (err) {
+      console.error("Error loading profile:", err);
+      showMessage("Error loading profile: " + err.message, "red");
+    }
+  });
+
+  // ✅ Update / Create profile
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const user = auth.currentUser;
+
+    if (!user) {
+      showMessage("No logged-in user. Please login again.", "red");
+      return;
+    }
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+
+      // 🔥 setDoc + merge = create if missing, otherwise update
+      await setDoc(userRef, {
+        name:        document.getElementById("name").value,
+        phone:       document.getElementById("phone").value,
+        gender:      document.getElementById("gender").value,
+        collegeName: document.getElementById("college").value,
+        email:       document.getElementById("email").value  // extra safety
+      }, { merge: true });
+
+      showMessage("Profile updated! Redirecting...", "green");
+      console.log("Profile created/updated, redirecting to user-profile.html");
+
+      setTimeout(() => {
+        window.location.href = "./user-profile.html";
+      }, 1500);
+
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      showMessage("Error updating profile: " + error.message, "red");
+    }
+  });
+
+  // ✅ Logout
+  document.getElementById("logoutBtn").onclick = async () => {
+    await signOut(auth);
+    window.location.href = "login.html";
+  };
+</script>
+
+</body>
+</html>
