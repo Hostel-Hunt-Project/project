@@ -74,16 +74,18 @@
             <a href="login.html" class="text-link">Already registered? Login</a>
         </div>
 
-        <p id="registerMessage" class="small" style="margin-top:10px;color:#2563eb;"></p>
+        <p id="registerMessage" class="small" style="margin-top:10px;"></p>
     </form>
 </div>
 
 <script type="module">
+  // Firebase imports
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
   import {
     getAuth,
-    createUserWithEmailAndPassword
+    createUserWithEmailAndPassword,
+    onAuthStateChanged
   } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
   import {
     getFirestore,
@@ -92,6 +94,7 @@
     serverTimestamp
   } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
+  // Your Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyAOKTqpJmN-43fDQrZVmfGCVlK_8JBTrvY",
     authDomain: "hostelhunt-1df83.firebaseapp.com",
@@ -102,17 +105,38 @@
     measurementId: "G-0G66K64YFS"
   };
 
+  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const analytics = getAnalytics(app);
   const auth = getAuth(app);
   const db = getFirestore(app);
 
+  // DOM elements
   const form = document.getElementById("registerForm");
   const msg = document.getElementById("registerMessage");
 
+  function showMessage(text, type = "success") {
+    msg.innerText = text;
+    msg.style.display = "block";
+    if (type === "success") msg.style.color = "green";
+    else if (type === "error") msg.style.color = "red";
+    else msg.style.color = "blue";
+  }
+
+  // 🔁 If already logged-in → show message + redirect to login
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      showMessage("You are already registered! Redirecting to login page...", "info");
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 2000);
+    }
+  });
+
+  // 📝 Signup form submit
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    msg.textContent = "";
+    msg.innerText = "";
 
     const formData = new FormData(form);
     const name = formData.get("name");
@@ -125,8 +149,7 @@
     const collegeName = formData.get("college_name");
 
     if (password !== confirmPassword) {
-      msg.style.color = "red";
-      msg.textContent = "Password and confirm password do not match.";
+      showMessage("Password and confirm password do not match.", "error");
       return;
     }
 
@@ -134,6 +157,7 @@
       const userCred = await createUserWithEmailAndPassword(auth, email, password);
       const uid = userCred.user.uid;
 
+      // Save extra user data in Firestore
       await setDoc(doc(db, "users", uid), {
         name,
         email,
@@ -144,56 +168,30 @@
         createdAt: serverTimestamp()
       });
 
-      msg.style.color = "green";
-      msg.textContent = "Account created! Redirecting to login...";
+      showMessage("Account created successfully! Redirecting to login...", "success");
+
       setTimeout(() => {
         window.location.href = "login.html";
-      }, 1500);
+      }, 2000);
     } catch (err) {
-      console.error(err);
-      msg.style.color = "red";
-      msg.textContent = err.message;
-    }
-  });
-    const msg1 = document.getElementById("registerMessage");
+  console.error(err);
 
-function showMessage(text, type = "success") {
-    msg.innerText = text;
-    msg.style.display = "block";
-    msg.style.color = type === "success" ? "green" : "red";
+  if (err.code === "auth/email-already-in-use") {
+    // ✅ Custom message + redirect to login page
+    msg.style.color = "blue";
+    msg.textContent = "This email is already registered. Redirecting to login page...";
+    setTimeout(() => {
+      window.location.href = "login.html";
+    }, 2000);
+  } else {
+    // ❌ Baaki sab errors normal tarike se dikhao
+    msg.style.color = "red";
+    msg.textContent = "Firebase error: " + err.message;
+  }
 }
-
-form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    msg.innerText = "";
-
-    const formData = new FormData(form);
-    const email = formData.get("email");
-    const password = formData.get("password");
-    const confirmPassword = formData.get("confirm_password");
-
-    if (password !== confirmPassword) {
-        showMessage("Passwords do not match!", "error");
-        return;
     }
-
-    try {
-        const userCred = await createUserWithEmailAndPassword(auth, email, password);
-
-        showMessage("Account created successfully! Redirecting to login...", "success");
-
-        // 🔥 Redirect after message shows
-        setTimeout(() => {
-            window.location.href = "login.html";
-        }, 2000);
-
-    } catch (err) {
-        showMessage(err.message, "error");
-    }
-});
-
+  );
 </script>
 
 </body>
 </html>
-
