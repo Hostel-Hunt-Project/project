@@ -26,22 +26,22 @@
         </p>
 
         <div class="search-box">
-            <form action="#" method="get">
+            <form id="searchForm">
                 <div class="search-row">
                     <div>
                         <label>City / Area</label>
-                        <input type="text" name="location" placeholder="e.g. Bhubaneswar, Khandagiri">
+                        <input type="text" name="location" id="locationInput" placeholder="e.g. Bhubaneswar, Khandagiri">
                     </div>
                     <div>
                         <label>Near College</label>
-                        <input type="text" name="college" placeholder="College / University name">
+                        <input type="text" name="college" id="collegeInput" placeholder="College / University name">
                     </div>
                 </div>
 
                 <div class="search-row">
                     <div>
                         <label>Type</label>
-                        <select name="type">
+                        <select name="type" id="typeInput">
                             <option value="">Any</option>
                             <option value="hostel">Hostel</option>
                             <option value="pg">PG</option>
@@ -51,7 +51,7 @@
                     </div>
                     <div>
                         <label>For</label>
-                        <select name="for_gender">
+                        <select name="for_gender" id="genderInput">
                             <option value="">Male / Female / Both</option>
                             <option value="male">Male</option>
                             <option value="female">Female</option>
@@ -60,11 +60,19 @@
                     </div>
                     <div>
                         <label>Max Budget (per month)</label>
-                        <input type="number" name="max_rent" placeholder="6000">
+                        <input type="number" name="max_rent" id="maxRentInput" placeholder="6000">
                     </div>
                 </div>
 
-                <button type="submit" class="btn-primary">Search</button>
+                <div style="margin-top:10px;">
+                    <label>Facilities (comma separated)</label>
+                    <input type="text" id="facilitiesInput" placeholder="e.g. Wi-Fi, Laundry, CCTV">
+                </div>
+
+                <div style="margin-top:12px;">
+                    <button type="submit" class="btn-primary">Search</button>
+                    <button type="button" id="clearBtn" class="btn" style="margin-left:8px;padding:8px 12px;background:#eee;border-radius:6px;">Clear</button>
+                </div>
             </form>
         </div>
 
@@ -80,18 +88,19 @@
 </section>
 
 <section class="section">
-    <h2>Featured Hostels & PGs</h2>
+    <h2>Search Results</h2>
     <div class="card-grid" id="featuredList">
-        <!-- Abhi static rehne do – baad me Firestore se laa sakte ho -->
+        <!-- JS will populate results here -->
     </div>
+    <p id="resultsMessage" style="text-align:center;margin-top:12px;color:#555;"></p>
 </section>
 
-<!-- Firebase init (just to be ready) -->
+<!-- Firebase + Search logic -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+  import { getFirestore, collection, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
+  // Use same config as other pages (already used in your project). 
   const firebaseConfig = {
     apiKey: "AIzaSyAOKTqpJmN-43fDQrZVmfGCVlK_8JBTrvY",
     authDomain: "hostelhunt-1df83.firebaseapp.com",
@@ -103,16 +112,168 @@
   };
 
   const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      console.log("Logged in as:", user.email);
-    } else {
-      console.log("Not logged in");
+  const form = document.getElementById("searchForm");
+  const featuredList = document.getElementById("featuredList");
+  const resultsMessage = document.getElementById("resultsMessage");
+  const clearBtn = document.getElementById("clearBtn");
+
+  // helper to create card HTML
+  function createCard(p) {
+    const safeFacilities = (p.facilities || "").split(",").map(s => s.trim()).filter(Boolean);
+    const cardsHTML = `
+      <div class="property-card">
+        <img src="${p.imageUrl || 'https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg'}" alt="${p.title}">
+        <div class="property-content">
+          <div class="property-title">${escapeHtml(p.title || 'Untitled')}</div>
+          <div class="property-meta">${escapeHtml(p.city || '')} • ${escapeHtml(p.nearbyCollege || '')}</div>
+          <div class="price">₹${escapeHtml(p.rent || '0')}</div>
+          <div style="margin-top:8px;">
+            ${safeFacilities.slice(0,4).map(f => `<span class="tag">${escapeHtml(f)}</span>`).join(' ')}
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px;">
+            <a href="property.html?id=${encodeURIComponent(p._id || '')}" class="btn-primary" style="padding:6px 10px;font-size:13px;">View</a>
+            <a href="mailto:${encodeURIComponent(p.ownerEmail || '')}" class="text-link" style="align-self:center;font-size:13px;">Contact Owner</a>
+          </div>
+        </div>
+      </div>
+    `;
+    return cardsHTML;
+  }
+
+  // escape to avoid XSS in case of untrusted data
+  function escapeHtml(text) {
+    if (text === undefined || text === null) return "";
+    return String(text).replace(/[&<>"'`=\/]/g, function (s) {
+      return ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+        '/': '&#x2F;',
+        '`': '&#x60;',
+        '=': '&#x3D;'
+      })[s];
+    });
+  }
+
+  // Build and run Firestore query with available filters
+  async function runSearch(filters) {
+    featuredList.innerHTML = "";
+    resultsMessage.style.color = "#555";
+    resultsMessage.innerText = "Searching...";
+
+    try {
+      const propsRef = collection(db, "properties");
+      let q = propsRef;
+
+      // Build an array of where clauses
+      const clauses = [];
+
+      if (filters.city) {
+        // Exact match on city (case-insensitive if you standardize data).
+        clauses.push(where("city", "==", filters.city));
+      }
+
+      if (filters.type) {
+        clauses.push(where("type", "==", filters.type));
+      }
+
+      if (filters.forGender) {
+        clauses.push(where("forGender", "==", filters.forGender));
+      }
+
+      if (filters.maxRent) {
+        clauses.push(where("rent", "<=", Number(filters.maxRent)));
+      }
+
+      // Apply at most 10 filters to Firestore query safely
+      if (clauses.length > 0) {
+        q = query(propsRef, ...clauses, orderBy("rent"), limit(50));
+      } else {
+        q = query(propsRef, orderBy("rent"), limit(50));
+      }
+
+      const snapshot = await getDocs(q);
+
+      let results = [];
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        data._id = docSnap.id;
+        results.push(data);
+      });
+
+      // Client-side partial filters (nearby college substring and facilities)
+      if (filters.college) {
+        const needle = filters.college.toLowerCase();
+        results = results.filter(r => (r.nearbyCollege || "").toLowerCase().includes(needle) || (r.city || "").toLowerCase().includes(needle));
+      }
+
+      if (filters.facilities) {
+        const want = filters.facilities.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+        if (want.length > 0) {
+          results = results.filter(r => {
+            const have = (r.facilities || "").toLowerCase();
+            // all wanted facilities must appear in stored string
+            return want.every(w => have.includes(w));
+          });
+        }
+      }
+
+      // Filter for Active status (if present)
+      results = results.filter(r => !r.status || r.status.toLowerCase() === "active");
+
+      // Render results
+      if (results.length === 0) {
+        resultsMessage.innerText = "No hostels found matching your filters.";
+        featuredList.innerHTML = "";
+        return;
+      }
+
+      resultsMessage.innerText = "";
+      // build cards
+      featuredList.innerHTML = results.map(r => createCard(r)).join("");
+    } catch (err) {
+      console.error(err);
+      resultsMessage.style.color = "red";
+      resultsMessage.innerText = "Error: " + err.message;
     }
+  }
+
+  // On submit
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const filters = {
+      city: document.getElementById("locationInput").value.trim(),
+      college: document.getElementById("collegeInput").value.trim(),
+      type: document.getElementById("typeInput").value,
+      forGender: document.getElementById("genderInput").value,
+      maxRent: document.getElementById("maxRentInput").value,
+      facilities: document.getElementById("facilitiesInput").value
+    };
+    // Normalize empty strings to null for city filter (Firestore equality)
+    if (filters.city === "") filters.city = null;
+    if (filters.type === "") filters.type = null;
+    if (filters.forGender === "") filters.forGender = null;
+    if (filters.maxRent === "") filters.maxRent = null;
+
+    await runSearch(filters);
   });
+
+  // Clear button
+  clearBtn.addEventListener("click", () => {
+    form.reset();
+    featuredList.innerHTML = "";
+    resultsMessage.innerText = "";
+  });
+
+  // Do an initial quick load of some properties
+  (async () => {
+    await runSearch({}); // default fetch
+  })();
+
 </script>
 
 </body>
