@@ -3,15 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <title>Owner Dashboard – Hostel Hunt</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        .action-btn {
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-edit {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+        }
+
+        .dashboard table td img {
+            width: 60px;
+            height: 45px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        @media(max-width: 768px){
+            .table { font-size: 12px; }
+            .table th, .table td { padding: 6px; }
+        }
+    </style>
 </head>
+
 <body>
 
 <header>
     <div class="logo">Hostel Hunt</div>
-    <nav>
+
+    <div class="menu-toggle" id="menuToggle">☰</div>
+
+    <nav id="mainNav">
         <a href="index.html">Home</a>
-        <a href="owner_dashboard.html">Owner Dashboard</a>
+        <a href="owner-dashboard.html">Owner Dashboard</a>
         <a href="#" id="logoutLink" class="btn">Logout</a>
     </nav>
 </header>
@@ -19,9 +54,9 @@
 <section class="dashboard">
     <div class="dashboard-header">
         <div>
-            <h2>Welcome, Owner</h2>
+            <h2>Your Properties</h2>
             <p style="font-size:13px;color:#555;">
-                Yahan se aap apne hostels/PGs manage kar sakte hain.
+                Manage your PGs, hostels, flats and rooms.
             </p>
         </div>
         <a href="add_property.html" class="btn-primary">+ Add New Property</a>
@@ -30,17 +65,19 @@
     <table class="table">
         <thead>
         <tr>
+            <th>Image</th>
             <th>Title</th>
             <th>City</th>
             <th>Type</th>
-            <th>For</th>
             <th>Rent (₹)</th>
-            <th>Available Beds</th>
+            <th>Beds</th>
             <th>Status</th>
+            <th style="width:110px">Actions</th>
         </tr>
         </thead>
+
         <tbody id="propertyRows">
-        <!-- Rows JS se add honge -->
+        <!-- JS injected rows -->
         </tbody>
     </table>
 
@@ -48,98 +85,169 @@
 </section>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
-  import {
-    getAuth,
-    onAuthStateChanged,
-    signOut
-  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-  import {
-    getFirestore,
-    collection,
-    query,
-    where,
-    getDocs
-  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
+    import {
+        getAuth,
+        onAuthStateChanged,
+        signOut
+    } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAOKTqpJmN-43fDQrZVmfGCVlK_8JBTrvY",
-    authDomain: "hostelhunt-1df83.firebaseapp.com",
-    projectId: "hostelhunt-1df83",
-    storageBucket: "hostelhunt-1df83.firebasestorage.app",
-    messagingSenderId: "272376261500",
-    appId: "1:272376261500:web:719ada3e6b22090c5b12f9",
-    measurementId: "G-0G66K64YFS"
-  };
+    import {
+        getFirestore,
+        collection,
+        query,
+        where,
+        getDocs,
+        doc,
+        deleteDoc
+    } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+    import {
+        getStorage,
+        ref as storageRef,
+        deleteObject
+    } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-storage.js";
 
-  const rowsBody = document.getElementById("propertyRows");
-  const msg = document.getElementById("dashboardMessage");
-  const logoutLink = document.getElementById("logoutLink");
+    // Firebase config
+    const firebaseConfig = {
+        apiKey: "AIzaSyAOKTqpJmN-43fDQrZVmfGCVlK_8JBTrvY",
+        authDomain: "hostelhunt-1df83.firebaseapp.com",
+        projectId: "hostelhunt-1df83",
+        storageBucket: "hostelhunt-1df83.firebasestorage.app",
+        messagingSenderId: "272376261500",
+        appId: "1:272376261500:web:719ada3e6b22090c5b12f9",
+        measurementId: "G-0G66K64YFS"
+    };
 
-  function addRow(p) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${p.title}</td>
-      <td>${p.city}</td>
-      <td>${p.type}</td>
-      <td>${p.forGender}</td>
-      <td>${p.rent}</td>
-      <td>${p.availableBeds}</td>
-      <td>${p.status || "Active"}</td>
-    `;
-    rowsBody.appendChild(tr);
-  }
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
-  async function loadProperties(ownerId) {
-    rowsBody.innerHTML = "";
-    msg.textContent = "Loading properties...";
+    const rowsBody = document.getElementById("propertyRows");
+    const msg = document.getElementById("dashboardMessage");
+    const logoutLink = document.getElementById("logoutLink");
 
-    try {
-      const q = query(
-        collection(db, "properties"),
-        where("ownerId", "==", ownerId)
-      );
-      const snapshot = await getDocs(q);
+    // Mobile menu toggle
+    document.getElementById("menuToggle").onclick = () => {
+        document.getElementById("mainNav").classList.toggle("show");
+    };
 
-      if (snapshot.empty) {
-        msg.textContent = "No properties found. Add your first property!";
-        return;
-      }
+    // Add rows with action buttons
+    function addRow(docId, p) {
+        const tr = document.createElement("tr");
 
-      snapshot.forEach(docSnap => {
-        addRow(docSnap.data());
-      });
+        tr.innerHTML = `
+          <td><img src="${p.imageURL || 'https://via.placeholder.com/100'}" /></td>
+          <td>${p.title}</td>
+          <td>${p.city}</td>
+          <td>${p.type}</td>
+          <td>${p.rent}</td>
+          <td>${p.availableBeds}</td>
+          <td>${p.status || "Active"}</td>
+          <td>
+            <button class="action-btn btn-edit" data-id="${docId}">Edit</button>
+            <button class="action-btn btn-delete" data-id="${docId}">Delete</button>
+          </td>
+        `;
 
-      msg.textContent = "";
-    } catch (err) {
-      console.error(err);
-      msg.style.color = "red";
-      msg.textContent = err.message;
+        rowsBody.appendChild(tr);
     }
-  }
 
-  onAuthStateChanged(auth, (user) => {
-    if (!user) {
-      alert("Please login as owner to view dashboard.");
-      window.location.href = "login.html";
-    } else {
-      loadProperties(user.uid);
+    // Load properties for logged-in owner
+    async function loadProperties(ownerId) {
+        rowsBody.innerHTML = "";
+        msg.textContent = "Loading properties...";
+
+        try {
+            const q = query(
+                collection(db, "properties"),
+                where("ownerId", "==", ownerId)
+            );
+
+            const snapshot = await getDocs(q);
+
+            if (snapshot.empty) {
+                msg.textContent = "No properties found. Add your first one!";
+                return;
+            }
+
+            msg.textContent = "";
+            snapshot.forEach(docSnap => {
+                addRow(docSnap.id, docSnap.data());
+            });
+
+        } catch (err) {
+            msg.style.color = "red";
+            msg.textContent = err.message;
+            console.error(err);
+        }
     }
-  });
 
-  logoutLink.addEventListener("click", async (e) => {
-    e.preventDefault();
-    await signOut(auth);
-    window.location.href = "login.html";
-  });
+    // Auth check
+    onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            alert("Please login as owner to view dashboard.");
+            window.location.href = "login.html";
+        } else {
+            loadProperties(user.uid);
+        }
+    });
+
+    // Handle edit / delete clicks (event delegation)
+    rowsBody.addEventListener("click", async (e) => {
+        const id = e.target.dataset.id;
+        if (!id) return;
+
+        // EDIT
+        if (e.target.classList.contains("btn-edit")) {
+            window.location.href = `edit_property.html?id=${id}`;
+        }
+
+        // DELETE
+        if (e.target.classList.contains("btn-delete")) {
+            const confirmed = confirm("Are you sure you want to delete this property?");
+            if (!confirmed) return;
+
+            try {
+                // First get the doc to read the image path
+                const snapshot = await getDocs(
+                    query(collection(db, "properties"), where("__name__", "==", id))
+                );
+
+                if (!snapshot.empty) {
+                    const data = snapshot.docs[0].data();
+
+                    // Delete image from storage (if exists)
+                    if (data.imagePath) {
+                        const imgRef = storageRef(storage, data.imagePath);
+                        await deleteObject(imgRef).catch(() => {});
+                    }
+                }
+
+                // Delete Firestore doc
+                await deleteDoc(doc(db, "properties", id));
+
+                alert("Property deleted.");
+                location.reload();
+
+            } catch (err) {
+                console.error(err);
+                alert("Error deleting: " + err.message);
+            }
+        }
+    });
+
+    // Logout
+    logoutLink.addEventListener("click", async (e) => {
+        e.preventDefault();
+        await signOut(auth);
+        window.location.href = "login.html";
+    });
+
 </script>
 
 </body>
 </html>
-
