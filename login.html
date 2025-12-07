@@ -49,83 +49,60 @@
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
-  import {
-    getAuth,
-    signInWithEmailAndPassword
-  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-  import {
-    getFirestore,
-    doc,
-    getDoc
-  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAOKTqpJmN-43fDQrZVmfGCVlK_8JBTrvY",
-    authDomain: "hostelhunt-1df83.firebaseapp.com",
-    projectId: "hostelhunt-1df83",
-    storageBucket: "hostelhunt-1df83.firebasestorage.app",
-    messagingSenderId: "272376261500",
-    appId: "1:272376261500:web:719ada3e6b22090c5b12f9",
-    measurementId: "G-0G66K64YFS"
-  };
+    const firebaseConfig = {
+        apiKey: "AIzaSyAOKTqpJmN-43fDQrZVmfGCVlK_8JBTrvY",
+        authDomain: "hostelhunt-1df83.firebaseapp.com",
+        projectId: "hostelhunt-1df83",
+        storageBucket: "hostelhunt-1df83.firebasestorage.app",
+        messagingSenderId: "272376261500",
+        appId: "1:272376261500:web:719ada3e6b22090c5b12f9"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  const form = document.getElementById("loginForm");
-  const msg  = document.getElementById("loginMessage");
+    const form = document.getElementById("loginForm");
+    const msg = document.getElementById("loginMessage");
 
-  function showMessage(text, type = "success") {
-    msg.innerText = text;
-    msg.style.display = "block";
-    msg.style.color = type === "success" ? "green" : "red";
-  }
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    msg.innerText = "";
+        msg.textContent = "Checking...";
+        msg.style.color = "#2563eb";
 
-    const formData     = new FormData(form);
-    const email        = formData.get("email");
-    const password     = formData.get("password");
-    const selectedRole = formData.get("role");   // dropdown se
+        const email = form.email.value;
+        const password = form.password.value;
 
-    try {
-      // 🔐 Firebase Auth login
-      const userCred = await signInWithEmailAndPassword(auth, email, password);
-      const uid      = userCred.user.uid;
+        try {
+            const userCred = await signInWithEmailAndPassword(auth, email, password);
+            const uid = userCred.user.uid;
 
-      // 🧾 Firestore se saved role read karo (agar hai to)
-      let actualRole = null;
-      const snap = await getDoc(doc(db, "users", uid));
-      if (snap.exists()) {
-        actualRole = snap.data().role || null;
-      }
+            const snap = await getDoc(doc(db, "users", uid));
+            let role = "student";
+            if (snap.exists()) role = snap.data().role;
 
-      showMessage("Login successful! Redirecting...", "success");
+            msg.style.color = "green";
+            msg.textContent = "Login successful! Redirecting...";
 
-      // ⏩ Role ke hisaab se redirect
-      setTimeout(() => {
-        if (actualRole === "owner" || selectedRole === "owner") {
-          // Owner ke liye dashboard
-          window.location.href = "owner_dashboard.html";
-        } else {
-          // Baaki sab ke liye profile page
-          window.location.href = "profile.html";
+            setTimeout(() => {
+                if (role === "owner") {
+                    window.location.href = "owner_dashboard.html";
+                } else {
+                    window.location.href = "profile.html";
+                }
+            }, 1200);
+
+        } catch (err) {
+            msg.style.color = "red";
+            msg.textContent = err.message;
         }
-      }, 1500);
-
-    } catch (error) {
-      console.error(error);
-      showMessage(error.message, "error");
-    }
-  });
+    });
 </script>
 
 </body>
 </html>
-
