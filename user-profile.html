@@ -1,75 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Your Profile – Hostel Hunt</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="style.css">
 
   <style>
+    body { background:#f3f4f6; margin:0; font-family:Arial, sans-serif; }
+    header {
+      background:#1e3a8a; color:white; padding:14px 20px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    header .logo { font-size:22px; font-weight:bold; }
+    header a { color:white; text-decoration:none; margin-left:14px; }
+
     .profile-box {
-      width: 420px;
-      margin: 60px auto;
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      text-align: center;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+      width:430px; margin:40px auto; background:white;
+      padding:25px; border-radius:12px;
+      text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.08);
     }
     .profile-pic {
-      width: 120px;
-      height:120px;
-      border-radius: 50%;
-      background: #ddd;
-      margin: auto;
-      margin-bottom: 15px;
+      width:150px; height:150px; border-radius:50%;
+      object-fit:cover; border:3px solid #ddd; background:#eee;
+      margin-bottom:16px;
     }
-    .profile-title {
-      font-size: 22px;
-      font-weight: 600;
-    }
-    .details-box {
-      margin-top: 15px;
-      text-align: left;
-    }
-    .details-box p{
-      margin: 8px 0;
-      font-size: 14px;
-    }
-    .btn-edit {
-      display: inline-block;
-      margin-top: 15px;
-      padding: 8px 14px;
-      background: #2563eb;
-      color: white;
-      border-radius: 6px;
-    }
+    .profile-name { font-size:22px; font-weight:600; margin:8px 0; }
+    .details p { margin:6px 0; font-size:15px; color:#374151; }
   </style>
 </head>
+
 <body>
 
 <header>
   <div class="logo">Hostel Hunt</div>
   <nav>
     <a href="index.html">Home</a>
-    <a href="profile.html" class="btn">Edit Profile</a>
-    <a href="#" id="logoutBtn" class="btn">Logout</a>
+    <a href="profile.html">Edit Profile</a>
+    <a href="#" id="logoutBtn">Logout</a>
   </nav>
 </header>
 
 <div class="profile-box">
+  <img src="https://via.placeholder.com/150" id="photo" class="profile-pic" />
 
-  <!-- Photo Placeholder -->
-  <div class="profile-pic" id="photoBox"></div>
+  <h2 class="profile-name" id="name">Loading...</h2>
 
-  <h3 class="profile-title" id="userName">Loading...</h3>
-
-  <div class="details-box" id="detailsArea"></div>
-
+  <div class="details" id="details"></div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
   import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -78,44 +60,46 @@
     projectId: "hostelhunt-1df83",
     storageBucket: "hostelhunt-1df83.firebasestorage.app",
     messagingSenderId: "272376261500",
-    appId: "1:272376261500:web:719ada3e6b22090c5b12f9",
-    measurementId: "G-0G66K64YFS"
+    appId: "1:272376261500:web:719ada3e6b22090c5b12f9"
   };
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  const nameLabel = document.getElementById("userName");
-  const detailBox = document.getElementById("detailsArea");
-
   onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      window.location.href = "login.html";
-      return;
-    }
+    if (!user) return location.href = "login.html";
 
-    const docRef = doc(db, "users", user.uid);
-    const snap = await getDoc(docRef);
+    try {
+      const snap = await getDoc(doc(db, "users", user.uid));
 
-    if (snap.exists()) {
+      if (!snap.exists()) {
+        document.getElementById("name").textContent = user.email;
+        return;
+      }
+
       const data = snap.data();
 
-      nameLabel.textContent = data.name;
+      // FIXED: Always show photoURL if exists
+      document.getElementById("photo").src =
+        data.photoURL ? data.photoURL : "https://via.placeholder.com/150";
 
-      detailBox.innerHTML = `
+      document.getElementById("name").textContent = data.name || "No Name";
+
+      document.getElementById("details").innerHTML = `
         <p><strong>Email:</strong> ${data.email}</p>
-        <p><strong>Phone:</strong> ${data.phone}</p>
-        <p><strong>College:</strong> ${data.collegeName}</p>
-        <p><strong>Gender:</strong> ${data.gender}</p>
-        <p><strong>Role:</strong> ${data.role}</p>
+        <p><strong>Phone:</strong> ${data.phone || "-"}</p>
+        <p><strong>College:</strong> ${data.collegeName || "-"}</p>
+        <p><strong>Gender:</strong> ${data.gender || "-"}</p>
       `;
+    } catch (error) {
+      console.error("Error loading profile:", error);
     }
-  })
+  });
 
   document.getElementById("logoutBtn").onclick = async () => {
     await signOut(auth);
-    window.location.href = "login.html";
+    location.href = "login.html";
   };
 </script>
 
