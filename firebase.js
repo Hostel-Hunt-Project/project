@@ -31,7 +31,7 @@ export const firebaseConfig = {
   authDomain: "hostelhunt-1df83.firebaseapp.com",
   databaseURL: "https://hostelhunt-1df83-default-rtdb.firebaseio.com",
   projectId: "hostelhunt-1df83",
-  storageBucket: "hostelhunt-1df83.firebasestorage.app",
+  storageBucket: "hostelhunt-1df83.appspot.com"
   messagingSenderId: "272376261500",
   appId: "1:272376261500:web:719ada3e6b22090c5b12f9",
   measurementId: "G-0G66K64YFS"
