@@ -1,4 +1,3 @@
-// firebase.js  
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getAuth,
@@ -31,7 +30,7 @@ export const firebaseConfig = {
   authDomain: "hostelhunt-1df83.firebaseapp.com",
   databaseURL: "https://hostelhunt-1df83-default-rtdb.firebaseio.com",
   projectId: "hostelhunt-1df83",
-  storageBucket: "hostelhunt-1df83.appspot.com"
+  storageBucket: "hostelhunt-1df83.appspot.com",
   messagingSenderId: "272376261500",
   appId: "1:272376261500:web:719ada3e6b22090c5b12f9",
   measurementId: "G-0G66K64YFS"
@@ -41,3 +40,13 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+// ✅ IMAGE UPLOAD FUNCTION (ADD BELOW)
+export async function uploadImage(file) {
+  const fileName = Date.now() + "_" + file.name;
+  const imageRef = ref(storage, "profiles/" + fileName);
+
+  await uploadBytes(imageRef, file);
+  const url = await getDownloadURL(imageRef);
+
+  return url;
+}
