@@ -7,13 +7,23 @@
 </head>
 <body>
 
+<!-- Header -->
 <header>
-    <div class="logo">Hostel Hunt</div>
-    <nav>
-        <a href="index.html">Home</a>
-        <a href="login.html">Login</a>
-        <a href="register.html" class="btn">Sign up</a>
-    </nav>
+  <div class="logo">Hostel Hunt</div>
+
+  <nav id="mainNav" style="display:flex;align-items:center;gap:12px;">
+    <a href="index.html">Home</a>
+    <a href="login.html" id="loginNav">Login</a>
+    <a href="register.html" id="signupNav" class="btn">Sign up</a>
+
+    <a href="#" id="meProfileLink" style="display:none;">
+      <img id="navAvatar" src="https://via.placeholder.com/36"
+           alt="Profile" style="width:36px;height:36px;border-radius:50%;vertical-align:middle;margin-right:8px;object-fit:cover;border:2px solid #fff;">
+      <span id="navName" style="vertical-align:middle;font-weight:600;"></span>
+    </a>
+
+    <a href="#" id="logoutNav" style="display:none;color:#fff;background:#ef4444;padding:6px 10px;border-radius:6px;text-decoration:none;">Logout</a>
+  </nav>
 </header>
 
 <div class="form-page">
@@ -78,77 +88,122 @@
     </form>
 </div>
 
-<!-- First load Firebase.js -->
-<script type="module" src="firebase.js"></script>
-
-<!-- Then load Register Logic -->
 <script type="module">
-import { auth, db } from "./firebase.js";
-import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
-const form = document.getElementById("registerForm");
-const msg = document.getElementById("registerMessage");
+  const firebaseConfig = {
+    apiKey: "AIzaSyAOKTqpJmN-43fDQrZVmfGCVlK_8JBTrvY",
+    authDomain: "hostelhunt-1df83.firebaseapp.com",
+    projectId: "hostelhunt-1df83",
+    storageBucket: "hostelhunt-1df83.firebasestorage.app",
+    messagingSenderId: "272376261500",
+    appId: "1:272376261500:web:719ada3e6b22090c5b12f9",
+    measurementId: "G-0G66K64YFS"
+  };
 
-function showMessage(text, type = "success") {
-  msg.innerText = text;
-  msg.style.display = "block";
-  msg.style.color = (type === "error") ? "red" : (type === "info" ? "blue" : "green");
-}
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
+  // header elements
+  const loginNav = document.getElementById("loginNav");
+  const signupNav = document.getElementById("signupNav");
+  const logoutNav = document.getElementById("logoutNav");
+  const meProfileLink = document.getElementById("meProfileLink");
+  const navAvatar = document.getElementById("navAvatar");
+  const navName = document.getElementById("navName");
 
-  msg.innerText = "";
-
-  const data = new FormData(form);
-
-  const name = data.get("name");
-  const email = data.get("email");
-  const phone = data.get("phone");
-  const password = data.get("password");
-  const confirmPassword = data.get("confirm_password");
-  const role = data.get("role");
-  const gender = data.get("gender");
-  const college = data.get("college_name");
-
-  if (password !== confirmPassword) {
-    showMessage("Passwords do not match!", "error");
-    return;
-  }
-
-  try {
-    const userCred = await createUserWithEmailAndPassword(auth, email, password);
-    const uid = userCred.user.uid;
-
-    await setDoc(doc(db, "users", uid), {
-      name,
-      email,
-      phone,
-      role,
-      gender,
-      college,
-      createdAt: serverTimestamp()
-    });
-
-    showMessage("Account created! Redirecting...", "success");
-
-    setTimeout(() => window.location.href = "login.html", 2000);
-
-  } catch (err) {
-    if (err.code === "auth/email-already-in-use") {
-      showMessage("Email is already registered. Redirecting to login...", "info");
-      setTimeout(() => window.location.href = "login.html", 2000);
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      loginNav.style.display = "";
+      signupNav.style.display = "";
+      logoutNav.style.display = "none";
+      meProfileLink.style.display = "none";
     } else {
-      showMessage("Firebase Error: " + err.message, "error");
+      loginNav.style.display = "none";
+      signupNav.style.display = "none";
+      logoutNav.style.display = "";
+      meProfileLink.style.display = "";
+      navName.textContent = user.email.split("@")[0] || "User";
+      navAvatar.src = user.photoURL || "https://via.placeholder.com/150";
     }
+  });
+
+  logoutNav.addEventListener("click", async (e) => {
+    e.preventDefault();
+    await signOut(auth);
+    window.location.href = "login.html";
+  });
+
+  // DOM elements
+  const form = document.getElementById("registerForm");
+  const msg = document.getElementById("registerMessage");
+
+  function showMessage(text, type = "success") {
+    msg.innerText = text;
+    msg.style.display = "block";
+    if (type === "success") msg.style.color = "green";
+    else if (type === "error") msg.style.color = "red";
+    else msg.style.color = "blue";
   }
-});
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    msg.innerText = "";
+
+    const formData = new FormData(form);
+    const name = formData.get("name");
+    const email = formData.get("email");
+    const phone = formData.get("phone");
+    const password = formData.get("password");
+    const confirmPassword = formData.get("confirm_password");
+    const role = formData.get("role");
+    const gender = formData.get("gender");
+    const collegeName = formData.get("college_name");
+
+    if (password !== confirmPassword) {
+      showMessage("Password and confirm password do not match.", "error");
+      return;
+    }
+
+    try {
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
+      const uid = userCred.user.uid;
+
+      // Save extra user data in Firestore with default photoURL
+      await setDoc(doc(db, "users", uid), {
+        name,
+        email,
+        phone,
+        role,
+        gender,
+        collegeName,
+        photoURL: "https://via.placeholder.com/150",
+        createdAt: serverTimestamp()
+      });
+
+      showMessage("Account created successfully! Redirecting to login...", "success");
+
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 1200);
+    } catch (err) {
+      console.error(err);
+
+      if (err.code === "auth/email-already-in-use") {
+        showMessage("This email is already registered. Redirecting to login page...", "info");
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 1200);
+      } else {
+        showMessage("Firebase error: " + err.message, "error");
+      }
+    }
+  });
 </script>
-
-
 
 </body>
 </html>
-
-
