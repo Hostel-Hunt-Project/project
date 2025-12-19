@@ -6,56 +6,17 @@
     <link rel="stylesheet" href="style.css">
 
     <style>
-        .details-container {
-            max-width: 900px;
-            margin: 30px auto;
-            background: #fff;
-            padding: 22px;
-            border-radius: 12px;
-            box-shadow: 0 1px 8px rgba(0,0,0,0.08);
-        }
-        .details-title {
-            font-size: 26px;
-            font-weight: bold;
-            margin-bottom: 6px;
-        }
-        .details-section {
-            margin-top: 22px;
-            padding-top: 10px;
-            border-top: 1px solid #eee;
-        }
-        .details-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-        .tag {
-            background: #eef2ff;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            margin-right: 6px;
-            display: inline-block;
-        }
-        .review-card {
-            background: #f9fafb;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            border: 1px solid #e5e7eb;
-        }
-        .owner-reply-box {
-            background:#eef2ff;
-            padding:10px;
-            margin-top:8px;
-            border-radius:6px;
-        }
-        textarea {
-            width:100%; 
-            padding:8px; 
-            border-radius:6px; 
-            border:1px solid #ddd;
-        }
+        .details-container { max-width: 900px; margin: 30px auto; background: #fff; padding: 22px; border-radius: 12px; box-shadow: 0 1px 8px rgba(0,0,0,0.08); }
+        .details-title { font-size: 26px; font-weight: bold; margin-bottom: 6px; }
+        .details-section { margin-top: 22px; padding-top: 10px; border-top: 1px solid #eee; }
+        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .tag { background: #eef2ff; padding: 5px 10px; border-radius: 20px; font-size: 12px; margin-right: 6px; display: inline-block; }
+        .review-card { background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e5e7eb; }
+        .owner-reply-box { background:#eef2ff; padding:10px; margin-top:8px; border-radius:6px; }
+        textarea { width:100%; padding:8px; border-radius:6px; border:1px solid #ddd; }
+        .action-row { display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+        .btn-primary { background:#2563eb;color:white;padding:8px 12px;border-radius:8px;text-decoration:none;display:inline-block; }
+        .btn-secondary { background:#e6f4ff;color:#2563eb;padding:8px 12px;border-radius:8px;text-decoration:none;display:inline-block; border:1px solid #d7f0ff; }
     </style>
 </head>
 
@@ -106,6 +67,13 @@
     </div>
 
     <div class="details-section">
+        <h3>Contact / Message</h3>
+        <div class="action-row" id="contactRow">
+            <!-- Buttons rendered by JS -->
+        </div>
+    </div>
+
+    <div class="details-section">
         <h3>Add Rating & Review</h3>
 
         <div style="background:#f8fafc; padding:15px; border-radius:8px;">
@@ -118,9 +86,7 @@
                 <option value="1">⭐ (1)</option>
             </select>
 
-            <textarea id="reviewComment"
-                      placeholder="Write your experience..."
-                      style="margin-top:10px;"></textarea>
+            <textarea id="reviewComment" placeholder="Write your experience..." style="margin-top:10px;"></textarea>
 
             <button id="submitReviewBtn" class="btn-primary" style="margin-top:10px;">
                 Submit Review
@@ -137,20 +103,10 @@
 
 
 <script type="module">
-
-    /* IMPORTS */
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
-    import {
-        getFirestore, doc, getDoc, updateDoc,
-        collection, addDoc, query, orderBy, getDocs
-    } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
-
-    import {
-        getAuth, onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-
-    /* FIREBASE CONFIG */
     const firebaseConfig = {
         apiKey: "AIzaSyAOKTqpJmN-43fDQrZVmfGCVlK_8JBTrvY",
         authDomain: "hostelhunt-1df83.firebaseapp.com",
@@ -164,14 +120,13 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    /* UTIL */
     function getId() {
         return new URLSearchParams(window.location.search).get("id");
     }
 
     window.propertyOwnerId = null;
+    window.propertyTitle = null;
 
-    /* LOAD PROPERTY */
     async function loadProperty() {
         const id = getId();
         if (!id) return;
@@ -184,8 +139,8 @@
         }
 
         const p = snap.data();
-
-        window.propertyOwnerId = p.ownerId;  // IMPORTANT FOR OWNER REPLY
+        window.propertyOwnerId = p.ownerId;
+        window.propertyTitle = p.title || "";
 
         document.getElementById("title").innerHTML = p.title;
         document.getElementById("city").innerText = p.city || "";
@@ -193,17 +148,36 @@
         document.getElementById("forGender").innerText = p.forGender;
         document.getElementById("rent").innerText = p.rent;
         document.getElementById("beds").innerText = p.availableBeds;
-        document.getElementById("description").innerText = p.description;
+        document.getElementById("description").innerText = p.description || "";
         document.getElementById("address").innerText = p.address;
-        document.getElementById("nearby").innerText = p.nearbyCollege;
+        document.getElementById("nearby").innerText = p.nearbyCollege || "";
 
-        if (p.imageUrl)
-            document.getElementById("propertyImage").src = p.imageUrl;
+        if (p.imageURL) document.getElementById("propertyImage").src = p.imageURL;
 
+        renderContactArea(p);
         loadReviews(id);
     }
 
-    /* LOAD REVIEWS + OWNER REPLIES */
+    // render contact / message buttons
+    function renderContactArea(p) {
+        const row = document.getElementById("contactRow");
+        row.innerHTML = "";
+
+        const view = document.createElement("a");
+        view.href = `mailto:${encodeURIComponent(p.ownerEmail || '')}`;
+        view.className = "btn-secondary";
+        view.textContent = "Contact Owner (Email)";
+
+        const messageBtn = document.createElement("a");
+        messageBtn.href = `chat.html?ownerId=${encodeURIComponent(p.ownerId)}&propertyId=${encodeURIComponent(getId())}`;
+        messageBtn.className = "btn-primary";
+        messageBtn.textContent = "Message Owner";
+
+        row.appendChild(messageBtn);
+        row.appendChild(view);
+    }
+
+    /* REVIEWS */
     async function loadReviews(propertyId) {
         const reviewsRef = collection(db, "properties", propertyId, "reviews");
         const q = query(reviewsRef, orderBy("time", "desc"));
@@ -246,20 +220,18 @@
 
                     ${isOwner && !r.reply ? `
                         <textarea id="replyInput-${reviewId}" placeholder="Write reply..."></textarea>
-                        <button onclick="submitReply('${propertyId}', '${reviewId}')"
-                            class="btn-primary" style="margin-top:6px;">
-                            Reply
-                        </button>
+                        <button onclick="submitReply('${propertyId}', '${reviewId}')" class="btn-primary" style="margin-top:6px;">Reply</button>
                     ` : ''}
                 </div>
             `;
         });
 
-        const avg = (total / count).toFixed(1);
-        document.getElementById("title").innerHTML += ` <span style="color:#fbbf24;">⭐ ${avg}</span>`;
+        if (count > 0) {
+          const avg = (total / count).toFixed(1);
+          document.getElementById("title").innerHTML += ` <span style="color:#fbbf24;">⭐ ${avg}</span>`;
+        }
     }
 
-    /* SUBMIT REPLY */
     window.submitReply = async function(propertyId, reviewId) {
         const user = auth.currentUser;
         if (!user) return alert("You must be logged in.");
@@ -283,7 +255,6 @@
         loadReviews(propertyId);
     };
 
-    /* SUBMIT REVIEW */
     async function submitReview() {
         const rating = Number(document.getElementById("reviewRating").value);
         const comment = document.getElementById("reviewComment").value.trim();
@@ -323,15 +294,11 @@
         loadReviews(propertyId);
     }
 
-    /* EVENT LISTENER */
     document.getElementById("submitReviewBtn").onclick = submitReview;
 
-    /* LOAD PAGE */
     loadProperty();
 
 </script>
-<script type="module" src="firebase.js"></script>
 
 </body>
 </html>
-
