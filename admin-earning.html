@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Earnings – Hostel Hunt Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  
+  <style>
+    body { background: #f8fafc; font-family: Arial, sans-serif; padding-bottom: 50px; }
+    
+    /* Header */
+    header { background: #1e3a8a; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+    header a { color: white; text-decoration: none; font-weight: bold; }
+
+    .container { max-width: 1000px; margin: 30px auto; padding: 0 15px; }
+
+    /* Stats Cards */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 5px solid #2563eb; }
+    .stat-card h3 { margin: 0 0 5px 0; color: #64748b; font-size: 14px; text-transform: uppercase; }
+    .stat-card .val { font-size: 28px; font-weight: bold; color: #0f172a; }
+
+    /* Table */
+    .table-box { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #f1f5f9; text-align: left; padding: 15px; color: #475569; font-size: 14px; }
+    td { padding: 15px; border-bottom: 1px solid #e2e8f0; font-size: 14px; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+
+    /* Status Badges */
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+    .badge-pending { background: #fff7ed; color: #c2410c; }
+    .badge-confirmed { background: #f0fdf4; color: #15803d; }
+    .badge-rejected { background: #fef2f2; color: #991b1b; }
+
+    /* Action Button */
+    .btn-collect { background: white; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; cursor: pointer; color: #334155; font-size: 12px; transition: 0.2s; }
+    .btn-collect:hover { background: #f1f5f9; border-color: #94a3b8; }
+    .paid-text { color: #16a34a; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+    
+    .auto-fix-msg { font-size:10px; color:#2563eb; display:none; }
+
+    @media(max-width: 600px) {
+        .stat-card { text-align: center; }
+        th, td { padding: 10px; font-size: 12px; }
+        .hide-mobile { display: none; } 
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>💰 Admin Earnings</div>
+  <a href="admin-dashboard.html">← Back</a>
+</header>
+
+<div class="container">
+
+  <div class="stats-grid">
+    <div class="stat-card" style="border-color: #f59e0b;">
+      <h3>Pending Commission</h3>
+      <div class="val" id="pendingTotal">₹0</div>
+      <small style="color:#666">Money owners owe you</small>
+    </div>
+    <div class="stat-card" style="border-color: #16a34a;">
+      <h3>Collected Commission</h3>
+      <div class="val" id="collectedTotal">₹0</div>
+      <small style="color:#666">Money received</small>
+    </div>
+    <div class="stat-card" style="border-color: #2563eb;">
+      <h3>Total Bookings Value</h3>
+      <div class="val" id="grossTotal">₹0</div>
+      <small style="color:#666">Total rent value generated</small>
+    </div>
+  </div>
+
+  <div class="table-box">
+    <h3 style="padding: 15px; margin: 0; border-bottom: 1px solid #eee;">Transaction Ledger</h3>
+    <div style="overflow-x: auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Property & Owner</th>
+            <th class="hide-mobile">Rent</th>
+            <th>Commission (3%)</th>
+            <th class="hide-mobile">Booking Status</th>
+            <th>Payment Action</th>
+          </tr>
+        </thead>
+        <tbody id="ledgerList">
+          <tr><td colspan="6" style="text-align:center;">Loading transactions...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { auth, db } from "./firebase.js"; 
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { collection, getDocs, query, orderBy, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // Security Check: Kick out non-admins
+  onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.href = "login.html"; return; }
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (!snap.exists() || snap.data().role !== "admin") {
+          alert("Access Denied.");
+          location.href = "index.html";
+      }
+      loadEarnings();
+  });
+
+  async function loadEarnings() {
+    const q = query(collection(db, "bookings"), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    
+    let pending = 0;
+    let collected = 0;
+    let gross = 0;
+
+    const tbody = document.getElementById("ledgerList");
+    tbody.innerHTML = "";
+
+    if (snap.empty) {
+        tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;'>No bookings found.</td></tr>";
+        updateStats(0, 0, 0);
+        return;
+    }
+
+    snap.forEach(docSnap => {
+        const data = docSnap.data();
+        let rent = Number(data.amount) || 0;
+        let commission = Number(data.platformCommission) || 0;
+        let wasFixed = false;
+
+        // 🔥 SELF-HEALING LOGIC: Fix 0 commission automatically
+        if (rent > 0 && commission === 0) {
+            commission = Math.ceil(rent * 0.03); // Calculate 3%
+            wasFixed = true;
+            
+            // Save the fix to database silently (Permanent Fix)
+            updateDoc(doc(db, "bookings", docSnap.id), {
+                platformCommission: commission,
+                commissionRate: "3% (Auto-fixed)"
+            }).catch(e => console.log("Auto-fix update silent fail", e));
+        }
+
+        // Logic: Only count confirmed or pending bookings (exclude rejected)
+        if (data.status !== 'rejected') {
+            gross += rent;
+            if (data.commissionPaid) {
+                collected += commission;
+            } else {
+                pending += commission;
+            }
+        }
+
+        // Format Date
+        const dateObj = data.createdAt ? data.createdAt.toDate() : new Date();
+        const dateStr = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+        // Status Badge
+        let statusClass = 'badge-pending';
+        if(data.status === 'confirmed') statusClass = 'badge-confirmed';
+        if(data.status === 'rejected') statusClass = 'badge-rejected';
+
+        // Payment Button
+        let actionHtml = '';
+        if (data.status === 'rejected') {
+            actionHtml = '<span style="color:#999;">—</span>';
+        } else if (data.commissionPaid) {
+            actionHtml = '<span class="paid-text">✔ Received</span>';
+        } else {
+            actionHtml = `<button class="btn-collect" onclick="window.markAsPaid('${docSnap.id}')">Mark Received</button>`;
+        }
+
+        const row = `
+            <tr>
+                <td>${dateStr}</td>
+                <td>
+                    <div style="font-weight:bold;">${data.propertyTitle || "Unknown Property"}</div>
+                    <div style="font-size:12px; color:#64748b;">${data.ownerName || "Owner"}</div>
+                </td>
+                <td class="hide-mobile">₹${rent}</td>
+                <td style="color:#2563eb; font-weight:bold;">
+                    ₹${commission}
+                    ${wasFixed ? '<br><span style="font-size:9px; color:green;">(Fixed)</span>' : ''}
+                </td>
+                <td class="hide-mobile"><span class="badge ${statusClass}">${data.status}</span></td>
+                <td>${actionHtml}</td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+
+    updateStats(pending, collected, gross);
+  }
+
+  function updateStats(p, c, g) {
+      document.getElementById("pendingTotal").textContent = "₹" + p;
+      document.getElementById("collectedTotal").textContent = "₹" + c;
+      document.getElementById("grossTotal").textContent = "₹" + g;
+  }
+
+  // Function to settle payment
+  window.markAsPaid = async (id) => {
+      if(!confirm("Did the owner pay you this commission amount?")) return;
+      
+      const btn = document.activeElement;
+      if(btn && btn.tagName === "BUTTON") btn.textContent = "Updating...";
+
+      try {
+          await updateDoc(doc(db, "bookings", id), {
+              commissionPaid: true
+          });
+          loadEarnings(); // Refresh table
+      } catch (err) {
+          alert("Error: " + err.message);
+      }
+  };
+</script>
+
+</body>
+</html>
