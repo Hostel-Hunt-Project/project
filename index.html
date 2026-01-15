@@ -14,7 +14,8 @@
   <nav id="mainNav" style="display:flex;align-items:center;gap:12px;">
     <a href="index.html">Home</a>
     
-    <a href="inbox.html">Messages</a>
+    <!-- Messages hidden by default -->
+    <a href="inbox.html" id="messagesLink" style="display:none;">Messages</a>
 
     <a href="owner-dashboard.html" id="ownerDashboardLink" style="display:none;">Owner Dashboard</a>
     <a href="admin-dashboard.html" id="adminDashboardLink" style="display:none; color:#fbbf24;">⚡ Admin</a>
@@ -30,6 +31,7 @@
     <a href="#" id="logoutNav" style="display:none;color:#fff;background:#ef4444;padding:6px 10px;border-radius:6px;">Logout</a>
   </nav>
 </header>
+
 <section class="hero">
   <div class="hero-left">
     <span class="badge">For Students & Bachelors</span>
@@ -100,6 +102,7 @@
     <img src="https://images.pexels.com/photos/439391/pexels-photo-439391.jpeg" style="width:100%;border-radius:14px;">
   </div>
 </section>
+
 <section class="section">
   <h2>Search Results</h2>
   <div class="card-grid" id="featuredList"></div>
@@ -117,20 +120,33 @@
   const meProfileLink = document.getElementById("meProfileLink");
   const navAvatar = document.getElementById("navAvatar");
   const navName = document.getElementById("navName");
-  
+
   const ownerLink = document.getElementById("ownerDashboardLink");
   const adminLink = document.getElementById("adminDashboardLink");
+  const messagesLink = document.getElementById("messagesLink");
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
-      loginNav.style.display = ""; signupNav.style.display = "";
-      logoutNav.style.display = "none"; meProfileLink.style.display = "none";
-      ownerLink.style.display = "none"; adminLink.style.display = "none";
+      loginNav.style.display = "";
+      signupNav.style.display = "";
+      logoutNav.style.display = "none";
+      meProfileLink.style.display = "none";
+
+      ownerLink.style.display = "none";
+      adminLink.style.display = "none";
+      messagesLink.style.display = "none"; // hide messages
+
       return;
     }
 
-    loginNav.style.display = "none"; signupNav.style.display = "none";
-    logoutNav.style.display = ""; meProfileLink.style.display = "flex";
+    loginNav.style.display = "none";
+    signupNav.style.display = "none";
+    logoutNav.style.display = "";
+    meProfileLink.style.display = "flex";
+
+    ownerLink.style.display = "none";
+    adminLink.style.display = "none";
+    messagesLink.style.display = "none"; // hidden by default
 
     const snap = await getDoc(doc(db, "users", user.uid));
     if (snap.exists()) {
@@ -138,13 +154,24 @@
       navName.textContent = u.name || user.email.split("@")[0];
       navAvatar.src = u.photoBase64 || u.photoURL || navAvatar.src;
 
-      // Show links based on role
-      if (u.role === "admin") adminLink.style.display = "inline-block";
-      if (u.role === "owner" || u.role === "admin") ownerLink.style.display = "inline-block";
+      // Role based visibility
+      if (u.role === "admin") {
+        adminLink.style.display = "inline-block";
+        ownerLink.style.display = "inline-block";
+        messagesLink.style.display = "inline-block"; // admin can see messages
+      }
+
+      if (u.role === "owner") {
+        ownerLink.style.display = "inline-block";
+        messagesLink.style.display = "inline-block"; // ONLY owner can see messages
+      }
     }
   });
 
-  logoutNav.onclick = async () => { await signOut(auth); location.href = "login.html"; };
+  logoutNav.onclick = async () => {
+    await signOut(auth);
+    location.href = "login.html";
+  };
 
   function createCard(p) {
     const img = p.imageBase64 || p.photoURL || "https://via.placeholder.com/300";
@@ -165,7 +192,7 @@
     const list = document.getElementById("featuredList");
     const msg = document.getElementById("resultsMessage");
     const loc = document.getElementById("locationInput").value.trim().toLowerCase();
-    
+
     list.innerHTML = "";
     if (!loc) { msg.textContent = "Please enter a city."; return; }
     msg.textContent = "Searching...";
@@ -185,7 +212,10 @@
   }
 
   document.getElementById("searchForm").onsubmit = (e) => { e.preventDefault(); runSearch(); };
-  document.getElementById("clearBtn").onclick = () => { document.getElementById("searchForm").reset(); document.getElementById("featuredList").innerHTML = ""; };
+  document.getElementById("clearBtn").onclick = () => {
+    document.getElementById("searchForm").reset();
+    document.getElementById("featuredList").innerHTML = "";
+  };
 </script>
 
 </body>
