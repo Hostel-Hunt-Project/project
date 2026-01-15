@@ -32,6 +32,7 @@
   <div class="logo">Hostel Hunt</div>
   <div style="display:flex;align-items:center;gap:12px;">
     <a href="index.html" style="color:#fff;text-decoration:none">Home</a>
+    <a href="inbox.html" style="color:#fff;text-decoration:none">Messages</a>
     <a href="#" id="logoutBtn" style="color:#fff;text-decoration:none">Logout</a>
   </div>
 </header>
@@ -57,10 +58,10 @@
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+  // Import from your existing firebase.js to share Auth state
+  import { auth, db } from "./firebase.js"; 
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
   import {
-    getFirestore,
     collection,
     doc,
     getDoc,
@@ -71,22 +72,8 @@
     addDoc,
     serverTimestamp,
     updateDoc
-  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAOKTqpJmN-43fDQrZVmfGCVlK_8JBTrvY",
-    authDomain: "hostelhunt-1df83.firebaseapp.com",
-    projectId: "hostelhunt-1df83",
-    storageBucket: "hostelhunt-1df83.firebasestorage.app",
-    messagingSenderId: "272376261500",
-    appId: "1:272376261500:web:719ada3e6b22090c5b12f9"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  // Query params: chat opened with owner (ownerId) for property (propertyId)
   const params = new URLSearchParams(window.location.search);
   const ownerId = params.get("ownerId");
   const propertyId = params.get("propertyId");
@@ -103,7 +90,7 @@
   let currentUser = null;
   let chatDocRef = null;
   let messagesUnsub = null;
-  let typingTimeout = null;
+  let propTitle = "Property"; // Default title
 
   logoutBtn.addEventListener("click", async (e) => {
     e.preventDefault();
@@ -120,7 +107,7 @@
     const meta = document.createElement("div");
     meta.className = "meta";
     const timeVal = m.time?.toDate ? m.time.toDate() : (m.time ? new Date(m.time) : new Date());
-    meta.textContent = (m.senderName || (m.senderId === currentUser.uid ? "You" : "Owner")) + " • " + timeVal.toLocaleString();
+    meta.textContent = (m.senderName || (m.senderId === currentUser.uid ? "You" : "User")) + " • " + timeVal.toLocaleString();
     el.appendChild(meta);
 
     const text = document.createElement("div");
@@ -140,46 +127,49 @@
     currentUser = user;
 
     if (!ownerId || !propertyId) {
-      alert("Chat missing ownerId or propertyId.");
-      return location.href = "index.html";
+       // If missing params, try to recover or just go to inbox
+       return location.href = "inbox.html";
     }
 
-    // load owner details
+    // 1. Load Owner Details
     try {
       const ownerSnap = await getDoc(doc(db, "users", ownerId));
       const owner = ownerSnap.exists() ? ownerSnap.data() : {};
       otherName.textContent = owner.name || owner.email || "Owner";
       otherAvatar.src = owner.photoURL || "https://via.placeholder.com/150";
     } catch (err) {
-      console.warn("Owner load failed", err);
-      otherName.textContent = "Owner";
+      otherName.textContent = "Chat";
     }
 
-    // load property title for header
+    // 2. Load Property Title (Important for Inbox)
     try {
       const pSnap = await getDoc(doc(db, "properties", propertyId));
       if (pSnap.exists()) {
         const p = pSnap.data();
-        propertyInfo.textContent = p.title ? `Property: ${p.title}` : "Property";
+        propTitle = p.title || "Property";
+        propertyInfo.textContent = `Property: ${propTitle}`;
       }
     } catch (err) { /* ignore */ }
 
-    // create/get chat doc (deterministic id)
+    // 3. Setup Chat Document
     const chatId = makeChatId(currentUser.uid, ownerId, propertyId);
     chatDocRef = doc(db, "chats", chatId);
 
     const chatSnap = await getDoc(chatDocRef);
     if (!chatSnap.exists()) {
+      // 🔥 THIS IS THE FIX: Saving ownerId and propertyTitle for the Inbox
       await setDoc(chatDocRef, {
         participants: [currentUser.uid, ownerId],
+        ownerId: ownerId, 
         propertyId: propertyId,
+        propertyTitle: propTitle,
         createdAt: serverTimestamp(),
-        lastMessage: "",
+        lastMessage: "Chat started",
         lastUpdated: serverTimestamp()
       });
     }
 
-    // subscribe to messages
+    // 4. Subscribe to Messages
     const msgsRef = collection(db, "chats", chatId, "messages");
     const q = query(msgsRef, orderBy("time", "asc"));
 
@@ -196,19 +186,20 @@
       scrollToBottom();
     });
 
-    // subscribe to chat doc for typing indicator
+    // 5. Typing Indicator
     onSnapshot(chatDocRef, (d) => {
       const data = d.data();
       if (!data) return;
-      if (data.typing && data.typing[ownerId]) {
-        typingStatus.style.display = "inline";
-      } else {
-        typingStatus.style.display = "none";
+      // Show typing if the OTHER person is typing
+      // We check if any key in 'typing' is true EXCEPT our own
+      if(data.typing) {
+         const isSomeoneTyping = Object.keys(data.typing).some(uid => uid !== currentUser.uid && data.typing[uid] === true);
+         typingStatus.style.display = isSomeoneTyping ? "inline" : "none";
       }
     });
   });
 
-  // Typing state handling
+  // Typing Logic
   let typingTimeoutHandle = null;
   async function setTyping(flag) {
     if (!chatDocRef || !currentUser) return;
@@ -242,13 +233,17 @@
 
     try {
       await addDoc(msgsRef, msg);
-      await updateDoc(chatDocRef, { lastMessage: text, lastUpdated: serverTimestamp() });
+      // Update the main chat doc so it shows up at the top of Inbox
+      await updateDoc(chatDocRef, { 
+          lastMessage: text, 
+          lastUpdated: serverTimestamp(),
+          propertyTitle: propTitle // Ensure title is always fresh
+      });
       textInput.value = "";
       setTyping(false);
       textInput.focus();
     } catch (err) {
       console.error("Send failed", err);
-      alert("Message send failed: " + err.message);
     }
   }
 </script>
