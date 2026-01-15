@@ -4,10 +4,13 @@
     <meta charset="UTF-8">
     <title>Register – Hostel Hunt</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Hidden by default, shown only when Admin is selected */
+        #adminCodeGroup { display: none; background: #fff1f2; padding: 10px; border-radius: 8px; border: 1px dashed #e11d48; margin-bottom: 15px; }
+    </style>
 </head>
 <body>
 
-<!-- Header -->
 <header>
   <div class="logo">Hostel Hunt</div>
 
@@ -15,20 +18,12 @@
     <a href="index.html">Home</a>
     <a href="login.html" id="loginNav">Login</a>
     <a href="register.html" id="signupNav" class="btn">Sign up</a>
-
-    <a href="#" id="meProfileLink" style="display:none;">
-      <img id="navAvatar" src="https://via.placeholder.com/36"
-           alt="Profile" style="width:36px;height:36px;border-radius:50%;vertical-align:middle;margin-right:8px;object-fit:cover;border:2px solid #fff;">
-      <span id="navName" style="vertical-align:middle;font-weight:600;"></span>
-    </a>
-
-    <a href="#" id="logoutNav" style="display:none;color:#fff;background:#ef4444;padding:6px 10px;border-radius:6px;text-decoration:none;">Logout</a>
   </nav>
 </header>
 
 <div class="form-page">
     <h2>Create an Account</h2>
-    <p class="small">Free sign-up for both students and property owners.</p>
+    <p class="small">Free sign-up for students, owners, and admins.</p>
 
     <form id="registerForm">
         <div class="form-group">
@@ -58,10 +53,16 @@
 
         <div class="form-group">
             <label>Register as</label>
-            <select name="role">
+            <select name="role" id="roleSelect">
                 <option value="student">Student / Bachelor</option>
                 <option value="owner">Owner</option>
-            </select>
+                <option value="admin">Admin (Restricted)</option> </select>
+        </div>
+
+        <div id="adminCodeGroup" class="form-group">
+            <label style="color:#e11d48; font-weight:bold;">Admin Secret Code</label>
+            <input type="text" id="secretCode" placeholder="Enter security key to continue">
+            <small style="color:#666;">Required for admin registration.</small>
         </div>
 
         <div class="form-group">
@@ -90,64 +91,49 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+  import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
-  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyAOKTqpJmN-43fDQrZVmfGCVlK_8JBTrvY",
-    authDomain: "hostelhunt-1df83.firebaseapp.com",
-    projectId: "hostelhunt-1df83",
-    storageBucket: "hostelhunt-1df83.firebasestorage.app",
-    messagingSenderId: "272376261500",
-    appId: "1:272376261500:web:719ada3e6b22090c5b12f9",
-    measurementId: "G-0G66K64YFS"
-  };
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+  import { firebaseConfig } from "./firebase.js"; // Reuse your config
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // header elements
+  // Toggle Secret Code Input
+  const roleSelect = document.getElementById("roleSelect");
+  const adminCodeGroup = document.getElementById("adminCodeGroup");
+  
+  roleSelect.addEventListener("change", () => {
+      if(roleSelect.value === "admin") {
+          adminCodeGroup.style.display = "block";
+      } else {
+          adminCodeGroup.style.display = "none";
+      }
+  });
+
+  // Header Logic (Same as before)
   const loginNav = document.getElementById("loginNav");
   const signupNav = document.getElementById("signupNav");
-  const logoutNav = document.getElementById("logoutNav");
-  const meProfileLink = document.getElementById("meProfileLink");
-  const navAvatar = document.getElementById("navAvatar");
-  const navName = document.getElementById("navName");
-
+  
   onAuthStateChanged(auth, (user) => {
     if (!user) {
       loginNav.style.display = "";
       signupNav.style.display = "";
-      logoutNav.style.display = "none";
-      meProfileLink.style.display = "none";
     } else {
       loginNav.style.display = "none";
       signupNav.style.display = "none";
-      logoutNav.style.display = "";
-      meProfileLink.style.display = "";
-      navName.textContent = user.email.split("@")[0] || "User";
-      navAvatar.src = user.photoURL || "https://via.placeholder.com/150";
     }
   });
 
-  logoutNav.addEventListener("click", async (e) => {
-    e.preventDefault();
-    await signOut(auth);
-    window.location.href = "login.html";
-  });
-
-  // DOM elements
+  // Form Submission
   const form = document.getElementById("registerForm");
   const msg = document.getElementById("registerMessage");
 
   function showMessage(text, type = "success") {
     msg.innerText = text;
     msg.style.display = "block";
-    if (type === "success") msg.style.color = "green";
-    else if (type === "error") msg.style.color = "red";
-    else msg.style.color = "blue";
+    msg.style.color = type === "success" ? "green" : "red";
   }
 
   form.addEventListener("submit", async (e) => {
@@ -163,6 +149,15 @@
     const role = formData.get("role");
     const gender = formData.get("gender");
     const collegeName = formData.get("college_name");
+    const secretInput = document.getElementById("secretCode").value;
+
+    // 🔒 SECURITY CHECK FOR ADMIN
+    if (role === "admin") {
+        if (secretInput !== "12345") { // CHANGE "12345" TO YOUR SECRET
+            showMessage("Invalid Admin Secret Code! Registration blocked.", "error");
+            return;
+        }
+    }
 
     if (password !== confirmPassword) {
       showMessage("Password and confirm password do not match.", "error");
@@ -173,12 +168,12 @@
       const userCred = await createUserWithEmailAndPassword(auth, email, password);
       const uid = userCred.user.uid;
 
-      // Save extra user data in Firestore with default photoURL
+      // Save user data
       await setDoc(doc(db, "users", uid), {
         name,
         email,
         phone,
-        role,
+        role, // Will be 'admin', 'owner', or 'student'
         gender,
         collegeName,
         photoURL: "https://via.placeholder.com/150",
@@ -192,14 +187,10 @@
       }, 1200);
     } catch (err) {
       console.error(err);
-
       if (err.code === "auth/email-already-in-use") {
-        showMessage("This email is already registered. Redirecting to login page...", "info");
-        setTimeout(() => {
-          window.location.href = "login.html";
-        }, 1200);
+        showMessage("This email is already registered.", "error");
       } else {
-        showMessage("Firebase error: " + err.message, "error");
+        showMessage("Error: " + err.message, "error");
       }
     }
   });
