@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard – Hostel Hunt</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  
+  <style>
+    body { background:#f3f4f6; margin:0; font-family:Arial,sans-serif; }
+    
+    header { background:#1e3a8a; color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; }
+    header a { color:#fff; text-decoration:none; margin-left:12px; }
+    
+    /* Fix Button Style */
+    .btn-fix { background:#f59e0b; color:#000; padding:6px 12px; border-radius:4px; border:none; font-weight:bold; cursor:pointer; text-decoration:none; margin-right:15px; }
+    .btn-fix:hover { background:#d97706; }
+
+    .container { max-width:1100px; margin:30px auto; padding:0 16px; }
+    
+    .card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; margin-top:20px; }
+    .stat-card { background:#fff; padding:20px; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.08); text-align:center; }
+    .stat-val { font-size:24px; font-weight:bold; color:#1e3a8a; margin-top:5px; }
+    
+    .booking-list { background:#fff; padding:15px; border-radius:12px; margin-top:20px; box-shadow:0 2px 5px rgba(0,0,0,0.08); }
+    .booking-item { border-bottom:1px solid #eee; padding:12px 0; display:flex; justify-content:space-between; align-items:center; }
+    .booking-item:last-child { border-bottom:none; }
+    .btn-small { font-size:12px; padding:6px 12px; cursor:pointer; border:1px solid #ccc; border-radius:4px; background:#fff; margin-left:5px; }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div><strong>Hostel Hunt Admin</strong></div>
+  <div style="display:flex; align-items:center;">
+    <button onclick="window.recalculateCommissions()" class="btn-fix">⚡ Recalculate Commission</button>
+    
+    <a href="index.html">Home</a>
+    <a href="#" id="logoutBtn" style="margin-left:15px; opacity:0.8;">Logout</a>
+  </div>
+</header>
+
+<div class="container">
+  
+  <div class="card-grid">
+      <div class="stat-card">
+          <div>Total Commission (Receivable)</div>
+          <div class="stat-val" id="totalEarnings">₹0</div>
+      </div>
+      <div class="stat-card">
+          <div>Total Commission (Collected)</div>
+          <div class="stat-val" id="collectedEarnings" style="color:green;">₹0</div>
+      </div>
+  </div>
+
+  <div class="booking-list">
+      <h3 style="margin-top:0;">Commission Ledger (3%)</h3>
+      <div id="ledgerItems">Loading...</div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { auth, db } from "./firebase.js"; 
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { collection, getDocs, query, orderBy, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.href = "login.html"; return; }
+      
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if(!snap.exists() || snap.data().role !== "admin") {
+          alert("Admins Only");
+          location.href = "index.html";
+      }
+      loadData();
+  });
+
+  async function loadData() {
+      const q = query(collection(db, "bookings"), orderBy("createdAt", "desc"));
+      const snap = await getDocs(q);
+      
+      let pending = 0;
+      let collected = 0;
+      const list = document.getElementById("ledgerItems");
+      list.innerHTML = "";
+
+      if(snap.empty) { list.innerHTML = "<p style='padding:10px;'>No bookings found.</p>"; return; }
+
+      snap.forEach(d => {
+          const b = d.data();
+          const commission = b.platformCommission || 0;
+          
+          if (b.status !== 'rejected') {
+              if (b.commissionPaid) collected += commission;
+              else pending += commission;
+          }
+
+          const isPaid = b.commissionPaid;
+          const statusColor = b.status === 'confirmed' ? 'green' : (b.status === 'rejected' ? 'orange' : 'black');
+
+          list.innerHTML += `
+            <div class="booking-item">
+               <div>
+                 <strong>${b.propertyTitle || "Unknown Property"}</strong> <span style="font-size:12px; color:${statusColor}">(${b.status})</span><br>
+                 <small>Owner: ${b.ownerName || "Unknown"}</small><br>
+                 <small>Rent: ₹${b.amount || 0} | <strong>Comm: ₹${commission}</strong></small>
+               </div>
+               <div>
+                 ${isPaid 
+                   ? '<span style="color:green; font-weight:bold; font-size:14px;">Received ✅</span>' 
+                   : `<button class="btn-small" onclick="window.markPaid('${d.id}')">Mark Received</button>`
+                 }
+               </div>
+            </div>`;
+      });
+
+      document.getElementById("totalEarnings").textContent = "₹" + pending;
+      document.getElementById("collectedEarnings").textContent = "₹" + collected;
+  }
+
+  // 🔥 THE FIX FUNCTION
+  window.recalculateCommissions = async () => {
+      if(!confirm("This will fix all '₹0' commissions by calculating 3% of the Rent. Continue?")) return;
+      
+      try {
+          const snap = await getDocs(collection(db, "bookings"));
+          let count = 0;
+          
+          for (const d of snap.docs) {
+              const data = d.data();
+              // Check for 'amount' or 'rent' field
+              const rent = Number(data.amount) || Number(data.rent) || 0;
+              
+              // Only fix if rent exists and commission is 0 or missing
+              if (rent > 0) {
+                  const comm = Math.ceil(rent * 0.03);
+                  
+                  await updateDoc(doc(db, "bookings", d.id), {
+                      platformCommission: comm,
+                      amount: rent // Ensure amount field is consistent
+                  });
+                  count++;
+              }
+          }
+          alert(`Successfully updated ${count} bookings! Reloading...`);
+          location.reload();
+      } catch (e) {
+          alert("Error updating: " + e.message);
+      }
+  };
+
+  window.markPaid = async (id) => {
+      if(confirm("Confirm you received this payment offline?")) {
+          await updateDoc(doc(db, "bookings", id), { commissionPaid: true });
+          loadData();
+      }
+  };
+
+  document.getElementById("logoutBtn").onclick = async () => { await signOut(auth); location.href="login.html"; };
+</script>
+
+</body>
+</html>
