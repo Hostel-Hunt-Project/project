@@ -1,142 +1,251 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Add Property – Hostel Hunt</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8" />
+  <title>Chat – Hostel Hunt</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
   <style>
-    body { background:#f3f4f6; margin:0; font-family:Arial; }
-    header { background:#1e3a8a; color:#fff; padding:14px 20px; display:flex; justify-content:space-between; }
-    header a { color:white; text-decoration:none; margin-left:10px; }
-
-    .form-container {
-      max-width:800px; margin:30px auto; background:#fff; padding:24px;
-      border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.08);
-    }
-    label { font-weight:600; display:block; margin-top:12px; }
-    input, select, textarea { width:100%; padding:10px; border-radius:6px; border:1px solid #d1d5db; box-sizing:border-box; }
-    textarea { resize:none; height:80px; }
-    #map { height:320px; border-radius:12px; margin-top:10px; }
-    .image-preview { width:100%; max-height:250px; object-fit:cover; border-radius:8px; margin-top:10px; display:none; }
-    .btn { background:#2563eb; color:white; padding:10px 14px; border-radius:8px; border:none; cursor:pointer; margin-top:14px; width:100%; font-size:16px; }
-
-    .map-search { display:flex; gap:10px; margin-top:5px; }
-    .map-search input { flex:1; }
-    .map-search button { background:#2563eb; color:white; border:none; padding:0 15px; border-radius:6px; cursor:pointer; }
+    body { background:#f3f4f6; margin:0; font-family:Arial, sans-serif; }
+    header { background:#1e3a8a; color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
+    .logo { font-weight:700; }
+    .chat-container { max-width:900px; margin:18px auto; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.06); display:flex; flex-direction:column; height:75vh; }
+    .chat-header { padding:12px 16px; display:flex; gap:12px; align-items:center; border-bottom:1px solid #eee; }
+    .chat-header img { width:44px; height:44px; border-radius:50%; object-fit:cover; }
+    .chat-body { flex:1; padding:12px; overflow:auto; background:linear-gradient(#fff,#fafafa); }
+    .message { max-width:72%; padding:10px 12px; border-radius:12px; margin-bottom:10px; display:inline-block; clear:both; word-wrap:break-word; }
+    .message.me { background:#2563eb; color:white; margin-left:auto; border-bottom-right-radius:4px; }
+    .message.them { background:#f1f5f9; color:#111; margin-right:auto; border-bottom-left-radius:4px; }
+    .meta { font-size:12px; color:#666; margin-bottom:6px; display:block; }
+    .chat-input { padding:10px; border-top:1px solid #eee; display:flex; gap:8px; align-items:center; }
+    .chat-input input, .chat-input textarea { flex:1; padding:10px 12px; border-radius:8px; border:1px solid #d1d5db; font-size:14px; }
+    .send-btn { background:#16a34a; color:white; padding:10px 14px; border-radius:8px; border:none; cursor:pointer; font-weight:600; }
+    .small { font-size:12px; color:#666; }
+    .empty { text-align:center; color:#888; padding:24px 8px; }
+    .status { font-size:12px; color:#666; margin-left:8px; }
+    @media(max-width:600px){ .chat-container{height:78vh;} }
   </style>
 </head>
-
 <body>
 
 <header>
-  <div><strong>Hostel Hunt</strong></div>
-  <nav>
-    <a href="index.html">Home</a>
-    <a href="owner-dashboard.html">Dashboard</a>
-  </nav>
+  <div class="logo">Hostel Hunt</div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <a href="index.html" style="color:#fff;text-decoration:none">Home</a>
+    <a href="inbox.html" style="color:#fff;text-decoration:none">Messages</a>
+    <a href="#" id="logoutBtn" style="color:#fff;text-decoration:none">Logout</a>
+  </div>
 </header>
 
-<div class="form-container">
-  <h2>Add New Property</h2>
-
-  <form id="propertyForm">
-
-    <label>Property Title</label>
-    <input id="title" required>
-
-    <label>Property Type</label>
-    <select id="type">
-      <option value="hostel">Hostel</option>
-      <option value="pg">PG</option>
-      <option value="room">Room</option>
-      <option value="flat">Flat</option>
-    </select>
-
-    <label>For Gender</label>
-    <select id="gender">
-      <option value="male">Male</option>
-      <option value="female">Female</option>
-      <option value="both">Both</option>
-    </select>
-
-    <label>City</label>
-    <input id="city" required>
-
-    <label>Nearby College</label>
-    <input id="nearbyCollege">
-
-    <label>Full Address</label>
-    <textarea id="address" required></textarea>
-
-    <label>Location Map</label>
-    <div class="map-search">
-      <input type="text" id="mapSearchInput" placeholder="Search location...">
-      <button type="button" id="mapSearchBtn">Find</button>
+<div class="chat-container" id="chatWrap" aria-live="polite">
+  <div class="chat-header" id="chatHeader">
+    <img id="otherAvatar" src="https://via.placeholder.com/150" alt="Owner"/>
+    <div>
+      <div id="otherName" style="font-weight:700;">Loading...</div>
+      <div class="small" id="propertyInfo">Property</div>
     </div>
-    <div id="map"></div>
-    <input type="hidden" id="lat">
-    <input type="hidden" id="lng">
+    <div style="margin-left:auto;">
+      <span class="small status" id="typingStatus" style="display:none;">Typing...</span>
+    </div>
+  </div>
 
-    <label>Monthly Rent (₹)</label>
-    <input type="number" id="rent" required>
+  <div class="chat-body" id="messages"></div>
 
-    <button class="btn" type="submit">Save Property</button>
-    <p id="msg" style="text-align:center;font-weight:bold;"></p>
-  </form>
+  <div class="chat-input">
+    <input id="textInput" placeholder="Write a message..." autocomplete="off" />
+    <button id="sendBtn" class="send-btn">Send</button>
+  </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+  // Import from your existing firebase.js to share Auth state
+  import { auth, db } from "./firebase.js"; 
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import {
+    collection,
+    doc,
+    getDoc,
+    setDoc,
+    query,
+    onSnapshot,
+    orderBy,
+    addDoc,
+    serverTimestamp,
+    updateDoc
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-<script>
-  const map = L.map('map').setView([20.2961, 85.8245], 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  const params = new URLSearchParams(window.location.search);
+  const ownerId = params.get("ownerId");
+  const propertyId = params.get("propertyId");
 
-  const marker = L.marker([20.2961, 85.8245], { draggable:true }).addTo(map);
+  const messagesDiv = document.getElementById("messages");
+  const sendBtn = document.getElementById("sendBtn");
+  const textInput = document.getElementById("textInput");
+  const otherName = document.getElementById("otherName");
+  const otherAvatar = document.getElementById("otherAvatar");
+  const propertyInfo = document.getElementById("propertyInfo");
+  const typingStatus = document.getElementById("typingStatus");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-  const latInput = document.getElementById("lat");
-  const lngInput = document.getElementById("lng");
+  let currentUser = null;
+  let chatDocRef = null;
+  let messagesUnsub = null;
+  let propTitle = "Property"; // Default title
 
-  latInput.value = 20.2961;
-  lngInput.value = 85.8245;
-
-  marker.on("dragend", () => {
-    const p = marker.getLatLng();
-    latInput.value = p.lat;
-    lngInput.value = p.lng;
+  logoutBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    await signOut(auth);
+    location.href = "login.html";
   });
 
-  // IMPORTANT FIX
-  setTimeout(() => { map.invalidateSize(); }, 300);
+  function scrollToBottom() { messagesDiv.scrollTop = messagesDiv.scrollHeight; }
 
-  document.getElementById("mapSearchBtn").onclick = async () => {
-    const q = document.getElementById("mapSearchInput").value.trim();
-    if(!q) return alert("Enter location");
+  function renderMessage(m) {
+    const el = document.createElement("div");
+    el.className = "message " + (m.senderId === currentUser.uid ? "me" : "them");
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    const timeVal = m.time?.toDate ? m.time.toDate() : (m.time ? new Date(m.time) : new Date());
+    meta.textContent = (m.senderName || (m.senderId === currentUser.uid ? "You" : "User")) + " • " + timeVal.toLocaleString();
+    el.appendChild(meta);
+
+    const text = document.createElement("div");
+    text.textContent = m.text;
+    el.appendChild(text);
+
+    messagesDiv.appendChild(el);
+  }
+
+  function makeChatId(a, b, pid) {
+    const ids = [a, b].sort().join("_");
+    return `${ids}_p_${pid}`;
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return location.href = "login.html";
+    currentUser = user;
+
+    if (!ownerId || !propertyId) {
+       // If missing params, try to recover or just go to inbox
+       return location.href = "inbox.html";
+    }
+
+    // 1. Load Owner Details
+    try {
+      const ownerSnap = await getDoc(doc(db, "users", ownerId));
+      const owner = ownerSnap.exists() ? ownerSnap.data() : {};
+      otherName.textContent = owner.name || owner.email || "Owner";
+      otherAvatar.src = owner.photoURL || "https://via.placeholder.com/150";
+    } catch (err) {
+      otherName.textContent = "Chat";
+    }
+
+    // 2. Load Property Title (Important for Inbox)
+    try {
+      const pSnap = await getDoc(doc(db, "properties", propertyId));
+      if (pSnap.exists()) {
+        const p = pSnap.data();
+        propTitle = p.title || "Property";
+        propertyInfo.textContent = `Property: ${propTitle}`;
+      }
+    } catch (err) { /* ignore */ }
+
+    // 3. Setup Chat Document
+    const chatId = makeChatId(currentUser.uid, ownerId, propertyId);
+    chatDocRef = doc(db, "chats", chatId);
+
+    const chatSnap = await getDoc(chatDocRef);
+    if (!chatSnap.exists()) {
+      // 🔥 THIS IS THE FIX: Saving ownerId and propertyTitle for the Inbox
+      await setDoc(chatDocRef, {
+        participants: [currentUser.uid, ownerId],
+        ownerId: ownerId, 
+        propertyId: propertyId,
+        propertyTitle: propTitle,
+        createdAt: serverTimestamp(),
+        lastMessage: "Chat started",
+        lastUpdated: serverTimestamp()
+      });
+    }
+
+    // 4. Subscribe to Messages
+    const msgsRef = collection(db, "chats", chatId, "messages");
+    const q = query(msgsRef, orderBy("time", "asc"));
+
+    messagesUnsub = onSnapshot(q, (snap) => {
+      messagesDiv.innerHTML = "";
+      if (snap.empty) {
+        const e = document.createElement("div");
+        e.className = "empty";
+        e.textContent = "No messages yet — say hi 👋";
+        messagesDiv.appendChild(e);
+        return;
+      }
+      snap.forEach(d => renderMessage(d.data()));
+      scrollToBottom();
+    });
+
+    // 5. Typing Indicator
+    onSnapshot(chatDocRef, (d) => {
+      const data = d.data();
+      if (!data) return;
+      // Show typing if the OTHER person is typing
+      // We check if any key in 'typing' is true EXCEPT our own
+      if(data.typing) {
+         const isSomeoneTyping = Object.keys(data.typing).some(uid => uid !== currentUser.uid && data.typing[uid] === true);
+         typingStatus.style.display = isSomeoneTyping ? "inline" : "none";
+      }
+    });
+  });
+
+  // Typing Logic
+  let typingTimeoutHandle = null;
+  async function setTyping(flag) {
+    if (!chatDocRef || !currentUser) return;
+    try {
+      await updateDoc(chatDocRef, { ["typing." + currentUser.uid]: flag ? true : false });
+      if (typingTimeoutHandle) clearTimeout(typingTimeoutHandle);
+      if (flag) {
+        typingTimeoutHandle = setTimeout(() => setTyping(false), 2000);
+      }
+    } catch (err) { /* ignore */ }
+  }
+
+  sendBtn.addEventListener("click", sendMessage);
+  textInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    else { setTyping(true); }
+  });
+
+  async function sendMessage() {
+    const text = textInput.value.trim();
+    if (!text) return;
+    if (!chatDocRef) return alert("Chat not ready.");
+
+    const msgsRef = collection(db, "chats", chatDocRef.id, "messages");
+    const msg = {
+      senderId: currentUser.uid,
+      senderName: currentUser.displayName || currentUser.email.split("@")[0] || "User",
+      text,
+      time: serverTimestamp()
+    };
 
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=in&limit=1`, {
-        headers: { "User-Agent": "HostelHuntApp/1.0" }
+      await addDoc(msgsRef, msg);
+      // Update the main chat doc so it shows up at the top of Inbox
+      await updateDoc(chatDocRef, { 
+          lastMessage: text, 
+          lastUpdated: serverTimestamp(),
+          propertyTitle: propTitle // Ensure title is always fresh
       });
-
-      const data = await res.json();
-      if(!data.length) return alert("Location not found");
-
-      const lat = parseFloat(data[0].lat);
-      const lon = parseFloat(data[0].lon);
-
-      marker.setLatLng([lat, lon]);
-      map.setView([lat, lon], 16);
-
-      latInput.value = lat;
-      lngInput.value = lon;
-
+      textInput.value = "";
+      setTyping(false);
+      textInput.focus();
     } catch (err) {
-      alert("Map search failed");
-      console.error(err);
+      console.error("Send failed", err);
     }
-  };
+  }
 </script>
 
 </body>
