@@ -8,42 +8,28 @@
 
 <body>
 
-<!-- ================= HEADER ================= -->
 <header>
   <div class="logo">Hostel Hunt</div>
 
   <nav id="mainNav" style="display:flex;align-items:center;gap:12px;">
     <a href="index.html">Home</a>
+    
+    <a href="inbox.html">Messages</a>
 
-    <!-- 🔥 OWNER DASHBOARD -->
-    <a href="owner-dashboard.html"
-       id="ownerDashboardLink"
-       style="display:none;">
-       Owner Dashboard
-    </a>
+    <a href="owner-dashboard.html" id="ownerDashboardLink" style="display:none;">Owner Dashboard</a>
+    <a href="admin-dashboard.html" id="adminDashboardLink" style="display:none; color:#fbbf24;">⚡ Admin</a>
 
     <a href="login.html" id="loginNav">Login</a>
     <a href="register.html" id="signupNav" class="btn">Sign up</a>
 
-    <a href="profile.html"
-       id="meProfileLink"
-       style="display:none;align-items:center;gap:8px;text-decoration:none;">
-      <img id="navAvatar"
-           src="https://via.placeholder.com/36"
-           style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #fff;">
+    <a href="profile.html" id="meProfileLink" style="display:none;align-items:center;gap:8px;text-decoration:none;">
+      <img id="navAvatar" src="https://via.placeholder.com/36" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #fff;">
       <span id="navName" style="font-weight:600;"></span>
     </a>
 
-    <a href="#"
-       id="logoutNav"
-       style="display:none;color:#fff;background:#ef4444;padding:6px 10px;border-radius:6px;">
-       Logout
-    </a>
+    <a href="#" id="logoutNav" style="display:none;color:#fff;background:#ef4444;padding:6px 10px;border-radius:6px;">Logout</a>
   </nav>
 </header>
-<!-- ========================================== -->
-
-<!-- ================= HERO ================= -->
 <section class="hero">
   <div class="hero-left">
     <span class="badge">For Students & Bachelors</span>
@@ -56,18 +42,14 @@
 
     <div class="search-box">
       <form id="searchForm">
-
         <div class="search-row">
           <div>
             <label>City / Area</label>
-            <input type="text" id="locationInput"
-                   placeholder="e.g. Bhubaneswar, Khandagiri">
+            <input type="text" id="locationInput" placeholder="e.g. Bhubaneswar, Khandagiri">
           </div>
-
           <div>
             <label>Near College</label>
-            <input type="text" id="collegeInput"
-                   placeholder="College / University name">
+            <input type="text" id="collegeInput" placeholder="College / University name">
           </div>
         </div>
 
@@ -82,7 +64,6 @@
               <option value="flat">Flat</option>
             </select>
           </div>
-
           <div>
             <label>For</label>
             <select id="genderInput">
@@ -92,7 +73,6 @@
               <option value="both">Both</option>
             </select>
           </div>
-
           <div>
             <label>Max Budget (per month)</label>
             <input type="number" id="maxRentInput" placeholder="6000">
@@ -101,15 +81,12 @@
 
         <div style="margin-top:10px;">
           <label>Facilities (comma separated)</label>
-          <input type="text" id="facilitiesInput"
-                 placeholder="e.g. Wi-Fi, Laundry, CCTV">
+          <input type="text" id="facilitiesInput" placeholder="e.g. Wi-Fi, Laundry, CCTV">
         </div>
 
         <div style="margin-top:12px;">
           <button type="submit" class="btn-primary">Search</button>
-          <button type="button" id="clearBtn"
-                  class="btn"
-                  style="margin-left:8px;">Clear</button>
+          <button type="button" id="clearBtn" class="btn" style="margin-left:8px;">Clear</button>
         </div>
       </form>
     </div>
@@ -120,56 +97,40 @@
   </div>
 
   <div class="hero-right">
-    <img src="https://images.pexels.com/photos/439391/pexels-photo-439391.jpeg"
-         style="width:100%;border-radius:14px;">
+    <img src="https://images.pexels.com/photos/439391/pexels-photo-439391.jpeg" style="width:100%;border-radius:14px;">
   </div>
 </section>
-<!-- ========================================== -->
-
-<!-- ================= RESULTS ================= -->
 <section class="section">
   <h2>Search Results</h2>
-
   <div class="card-grid" id="featuredList"></div>
-
-  <p id="resultsMessage"
-     style="text-align:center;margin-top:12px;color:#555;"></p>
+  <p id="resultsMessage" style="text-align:center;margin-top:12px;color:#555;"></p>
 </section>
 
-<!-- ================= SCRIPT ================= -->
 <script type="module">
   import { auth, db } from "./firebase.js";
-  import { onAuthStateChanged, signOut }
-    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import {
-    collection, query, getDocs, orderBy, limit,
-    doc, getDoc
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { collection, query, getDocs, orderBy, limit, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  /* ================= HEADER ================= */
   const loginNav = document.getElementById("loginNav");
   const signupNav = document.getElementById("signupNav");
   const logoutNav = document.getElementById("logoutNav");
   const meProfileLink = document.getElementById("meProfileLink");
   const navAvatar = document.getElementById("navAvatar");
   const navName = document.getElementById("navName");
-  const ownerDashboardLink =
-    document.getElementById("ownerDashboardLink");
+  
+  const ownerLink = document.getElementById("ownerDashboardLink");
+  const adminLink = document.getElementById("adminDashboardLink");
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
-      loginNav.style.display = "";
-      signupNav.style.display = "";
-      logoutNav.style.display = "none";
-      meProfileLink.style.display = "none";
-      ownerDashboardLink.style.display = "none";
+      loginNav.style.display = ""; signupNav.style.display = "";
+      logoutNav.style.display = "none"; meProfileLink.style.display = "none";
+      ownerLink.style.display = "none"; adminLink.style.display = "none";
       return;
     }
 
-    loginNav.style.display = "none";
-    signupNav.style.display = "none";
-    logoutNav.style.display = "";
-    meProfileLink.style.display = "flex";
+    loginNav.style.display = "none"; signupNav.style.display = "none";
+    logoutNav.style.display = ""; meProfileLink.style.display = "flex";
 
     const snap = await getDoc(doc(db, "users", user.uid));
     if (snap.exists()) {
@@ -177,53 +138,24 @@
       navName.textContent = u.name || user.email.split("@")[0];
       navAvatar.src = u.photoBase64 || u.photoURL || navAvatar.src;
 
-      // 🔥 ROLE CHECK
-      if (u.role === "owner" || u.role === "admin") {
-        ownerDashboardLink.style.display = "inline-block";
-      } else {
-        ownerDashboardLink.style.display = "none";
-      }
+      // Show links based on role
+      if (u.role === "admin") adminLink.style.display = "inline-block";
+      if (u.role === "owner" || u.role === "admin") ownerLink.style.display = "inline-block";
     }
   });
 
-  logoutNav.onclick = async () => {
-    await signOut(auth);
-    location.href = "login.html";
-  };
-
-  /* ================= SEARCH ================= */
-  function escapeHtml(t) {
-    return String(t || "").replace(/[&<>"']/g, s =>
-      ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[s])
-    );
-  }
+  logoutNav.onclick = async () => { await signOut(auth); location.href = "login.html"; };
 
   function createCard(p) {
-    const img =
-      p.imageBase64?.startsWith("data:image")
-        ? p.imageBase64
-        : "https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg";
-
+    const img = p.imageBase64 || p.photoURL || "https://via.placeholder.com/300";
     return `
-      <div class="property-card"
-           style="cursor:pointer;"
-           onclick="window.location.href='property.html?id=${p.id}'">
+      <div class="property-card" onclick="window.location.href='property.html?id=${p.id}'" style="cursor:pointer;">
         <img src="${img}">
         <div class="property-content">
-          <div class="property-title">${escapeHtml(p.title)}</div>
-          <div class="property-meta">
-            ${escapeHtml(p.city || "")}
-            ${p.nearbyCollege ? " • " + escapeHtml(p.nearbyCollege) : ""}
-          </div>
-          <div class="price">₹${escapeHtml(p.rent)}</div>
-
-          <div style="margin-top:10px;">
-            <a href="property.html?id=${p.id}"
-               class="btn-primary"
-               style="padding:6px 10px;font-size:13px;">
-               View Details
-            </a>
-          </div>
+          <div class="property-title">${p.title}</div>
+          <div class="property-meta">${p.city} ${p.nearbyCollege ? "• " + p.nearbyCollege : ""}</div>
+          <div class="price">₹${p.rent}</div>
+          <button class="btn-primary" style="margin-top:10px; width:100%;">View Details</button>
         </div>
       </div>
     `;
@@ -232,58 +164,28 @@
   async function runSearch() {
     const list = document.getElementById("featuredList");
     const msg = document.getElementById("resultsMessage");
-
-    const location = document.getElementById("locationInput").value.trim().toLowerCase();
-
+    const loc = document.getElementById("locationInput").value.trim().toLowerCase();
+    
     list.innerHTML = "";
-
-    if (!location) {
-      msg.textContent = "Please enter a city or area to search.";
-      return;
-    }
-
+    if (!loc) { msg.textContent = "Please enter a city."; return; }
     msg.textContent = "Searching...";
 
-    const q = query(
-      collection(db, "properties"),
-      orderBy("createdAt", "desc"),
-      limit(50)
-    );
-
+    const q = query(collection(db, "properties"), orderBy("createdAt", "desc"), limit(50));
     const snap = await getDocs(q);
     const results = [];
 
-    snap.forEach(docSnap => {
-      const p = docSnap.data();
-      p.id = docSnap.id;
-
-      if (
-        (p.status || "").toLowerCase() === "active" &&
-        p.city?.toLowerCase().includes(location)
-      ) {
-        results.push(p);
-      }
+    snap.forEach(d => {
+      const p = d.data(); p.id = d.id;
+      if (p.city?.toLowerCase().includes(loc) && p.status === "active") results.push(p);
     });
 
-    if (!results.length) {
-      msg.textContent = "No properties found for this search.";
-      return;
-    }
-
+    if (!results.length) { msg.textContent = "No properties found."; return; }
     msg.textContent = "";
     list.innerHTML = results.map(createCard).join("");
   }
 
-  document.getElementById("searchForm").onsubmit = (e) => {
-    e.preventDefault();
-    runSearch();
-  };
-
-  document.getElementById("clearBtn").onclick = () => {
-    document.getElementById("searchForm").reset();
-    document.getElementById("featuredList").innerHTML = "";
-    document.getElementById("resultsMessage").textContent = "";
-  };
+  document.getElementById("searchForm").onsubmit = (e) => { e.preventDefault(); runSearch(); };
+  document.getElementById("clearBtn").onclick = () => { document.getElementById("searchForm").reset(); document.getElementById("featuredList").innerHTML = ""; };
 </script>
 
 </body>
