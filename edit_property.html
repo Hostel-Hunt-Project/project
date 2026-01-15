@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Property – Hostel Hunt</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    body { background:#f3f4f6; margin:0; font-family:Arial; }
+    header { background:#1e3a8a; color:#fff; padding:14px 20px; display:flex; justify-content:space-between; }
+    header a { color:white; text-decoration:none; margin-left:10px; }
+
+    .container { max-width:800px; margin:30px auto; background:#fff; padding:24px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.08); }
+    label { font-weight:600; display:block; margin-top:12px; }
+    input, select, textarea { width:100%; padding:10px; border-radius:6px; border:1px solid #d1d5db; box-sizing:border-box; }
+    textarea { resize:none; height:80px; }
+    
+    #map { height:320px; border-radius:12px; margin-top:10px; }
+    .image-preview { width:100%; max-height:250px; object-fit:cover; border-radius:8px; margin-top:10px; display:block; }
+    
+    .btn { background:#16a34a; color:white; padding:10px 14px; border-radius:8px; border:none; cursor:pointer; margin-top:14px; width:100%; font-size:16px; }
+    .btn-cancel { background:#ef4444; margin-top:10px; }
+
+    .map-search { display:flex; gap:10px; margin-top:5px; }
+    .map-search input { flex:1; }
+    .map-search button { background:#2563eb; color:white; border:none; padding:0 15px; border-radius:6px; cursor:pointer; }
+  </style>
+</head>
+
+<body>
+<header>
+  <div><strong>Hostel Hunt</strong></div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="owner-dashboard.html">Dashboard</a>
+  </nav>
+</header>
+
+<div class="container">
+  <h2>Edit Property</h2>
+  <div id="loading">Loading...</div>
+
+  <form id="propertyForm" style="display:none;">
+    <label>Property Title</label><input id="title" required>
+    <label>Type</label><select id="type"><option value="hostel">Hostel</option><option value="pg">PG</option><option value="room">Room</option><option value="flat">Flat</option></select>
+    <label>Gender</label><select id="gender"><option value="male">Male</option><option value="female">Female</option><option value="both">Both</option></select>
+
+    <label>Payment Mode</label><select id="paymentMode"><option value="cash_upi">Cash & UPI</option><option value="cash_only">Cash Only</option><option value="upi_only">UPI Only</option></select>
+    <label>UPI ID</label><input type="text" id="upiId">
+
+    <label>City</label><input id="city" required>
+    <label>Nearby College</label><input id="nearbyCollege">
+    <label>Address</label><textarea id="address" required></textarea>
+
+    <label>Location Map</label>
+    <div class="map-search"><input type="text" id="mapSearchInput"><button type="button" id="mapSearchBtn">Find</button></div>
+    <div id="map"></div>
+    <input type="hidden" id="lat"><input type="hidden" id="lng">
+
+    <label>Rent (₹)</label><input type="number" id="rent" required>
+    <label>Beds</label><input type="number" id="beds">
+    <label>Facilities</label><input id="facilities">
+
+    <label>Update Image</label>
+    <input type="file" id="imageInput" accept="image/*">
+    <img id="imagePreview" class="image-preview">
+
+    <button class="btn" type="submit" id="submitBtn">Save Changes</button>
+    <button class="btn btn-cancel" type="button" onclick="location.href='owner-dashboard.html'">Cancel</button>
+    <p id="msg" style="text-align:center; margin-top:10px;"></p>
+  </form>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+  import { auth, db, storage } from "./firebase.js"; 
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+  let currentUser, propertyId, currentPhotoURL;
+  const form = document.getElementById("propertyForm");
+
+  onAuthStateChanged(auth, u => {
+      if(!u) location.href="login.html";
+      currentUser=u;
+      propertyId = new URLSearchParams(window.location.search).get("id");
+      if(propertyId) loadData();
+  });
+
+  const map = L.map('map').setView([20.296, 85.824], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  const marker = L.marker([20.296, 85.824], {draggable:true}).addTo(map);
+  const latInput=document.getElementById("lat");
+  const lngInput=document.getElementById("lng");
+  marker.on("dragend", ()=>{ const p=marker.getLatLng(); latInput.value=p.lat; lngInput.value=p.lng; });
+
+  document.getElementById("mapSearchBtn").onclick = async () => {
+      const q = document.getElementById("mapSearchInput").value;
+      if(q) {
+          try {
+              const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=in&limit=1`);
+              const d = await r.json();
+              if(d.length){ marker.setLatLng([d[0].lat, d[0].lon]); map.setView([d[0].lat, d[0].lon], 16); latInput.value=d[0].lat; lngInput.value=d[0].lon; }
+          } catch(e){}
+      }
+  };
+
+  async function loadData() {
+      const snap = await getDoc(doc(db, "properties", propertyId));
+      if(!snap.exists()) return alert("Error");
+      const p = snap.data();
+      
+      document.getElementById("title").value = p.title || "";
+      document.getElementById("rent").value = p.rent || "";
+      document.getElementById("city").value = p.city || "";
+      document.getElementById("nearbyCollege").value = p.nearbyCollege || "";
+      document.getElementById("address").value = p.address || "";
+      document.getElementById("beds").value = p.availableBeds || "";
+      document.getElementById("facilities").value = p.facilities || "";
+      document.getElementById("type").value = p.type || "hostel";
+      document.getElementById("gender").value = p.forGender || "male";
+      document.getElementById("paymentMode").value = p.paymentMode || "cash_upi";
+      document.getElementById("upiId").value = p.upiId || "";
+
+      currentPhotoURL = p.photoURL || p.imageBase64 || "";
+      if(currentPhotoURL) document.getElementById("imagePreview").src = currentPhotoURL;
+
+      const lat = p.lat || 20.296, lng = p.lng || 85.824;
+      marker.setLatLng([lat,lng]); map.setView([lat,lng], 15);
+      latInput.value=lat; lngInput.value=lng;
+
+      document.getElementById("loading").style.display="none";
+      form.style.display="block";
+      map.invalidateSize();
+  }
+
+  form.onsubmit = async (e) => {
+      e.preventDefault();
+      document.getElementById("msg").textContent = "Saving...";
+      
+      let url = currentPhotoURL;
+      if(document.getElementById("imageInput").files[0]) {
+          const file = document.getElementById("imageInput").files[0];
+          const refS = ref(storage, `properties/${Date.now()}_${file.name}`);
+          await uploadBytes(refS, file);
+          url = await getDownloadURL(refS);
+      }
+
+      await updateDoc(doc(db, "properties", propertyId), {
+          title: document.getElementById("title").value,
+          rent: Number(document.getElementById("rent").value),
+          city: document.getElementById("city").value,
+          nearbyCollege: document.getElementById("nearbyCollege").value,
+          address: document.getElementById("address").value,
+          availableBeds: document.getElementById("beds").value,
+          facilities: document.getElementById("facilities").value,
+          type: document.getElementById("type").value,
+          forGender: document.getElementById("gender").value,
+          paymentMode: document.getElementById("paymentMode").value,
+          upiId: document.getElementById("upiId").value,
+          lat: Number(latInput.value), lng: Number(lngInput.value),
+          photoURL: url,
+          updatedAt: serverTimestamp()
+      });
+      location.href = "owner-dashboard.html";
+  };
+</script>
+</body>
+</html>
