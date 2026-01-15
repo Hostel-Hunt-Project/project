@@ -13,7 +13,7 @@
 
   <nav id="mainNav" style="display:flex;align-items:center;gap:12px;">
     <a href="index.html">Home</a>
-    
+
     <!-- Messages hidden by default -->
     <a href="inbox.html" id="messagesLink" style="display:none;">Messages</a>
 
@@ -139,14 +139,15 @@
       return;
     }
 
+    // user is logged in (normal / owner / admin)
     loginNav.style.display = "none";
     signupNav.style.display = "none";
     logoutNav.style.display = "";
     meProfileLink.style.display = "flex";
+    messagesLink.style.display = "inline-block"; // NORMAL USER ALSO CAN SEE
 
     ownerLink.style.display = "none";
     adminLink.style.display = "none";
-    messagesLink.style.display = "none"; // hidden by default
 
     const snap = await getDoc(doc(db, "users", user.uid));
     if (snap.exists()) {
@@ -154,16 +155,13 @@
       navName.textContent = u.name || user.email.split("@")[0];
       navAvatar.src = u.photoBase64 || u.photoURL || navAvatar.src;
 
-      // Role based visibility
+      if (u.role === "owner") {
+        ownerLink.style.display = "inline-block";
+      }
+
       if (u.role === "admin") {
         adminLink.style.display = "inline-block";
         ownerLink.style.display = "inline-block";
-        messagesLink.style.display = "inline-block"; // admin can see messages
-      }
-
-      if (u.role === "owner") {
-        ownerLink.style.display = "inline-block";
-        messagesLink.style.display = "inline-block"; // ONLY owner can see messages
       }
     }
   });
