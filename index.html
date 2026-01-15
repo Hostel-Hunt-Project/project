@@ -14,7 +14,6 @@
   <nav id="mainNav" style="display:flex;align-items:center;gap:12px;">
     <a href="index.html">Home</a>
 
-    <!-- Messages hidden by default -->
     <a href="inbox.html" id="messagesLink" style="display:none;">Messages</a>
 
     <a href="owner-dashboard.html" id="ownerDashboardLink" style="display:none;">Owner Dashboard</a>
@@ -161,7 +160,7 @@
 
       if (u.role === "admin") {
         adminLink.style.display = "inline-block";
-        ownerLink.style.display = "inline-block";
+        // REMOVED: ownerLink.style.display = "inline-block";  <-- Logic removed here
       }
     }
   });
