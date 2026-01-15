@@ -5,201 +5,111 @@
   <title>Edit Property – Hostel Hunt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <style>
-    body { background:#f3f4f6; font-family:Arial; margin:0; }
-    .container { max-width:900px; margin:30px auto; padding:16px; }
-    .card { background:#fff; padding:20px; border-radius:12px; }
+    body { background:#f3f4f6; margin:0; font-family:Arial; }
+    header { background:#1e3a8a; color:#fff; padding:14px 20px; display:flex; justify-content:space-between; }
+    header a { color:white; text-decoration:none; margin-left:10px; }
+
+    .container { max-width:800px; margin:30px auto; background:#fff; padding:24px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.08); }
     label { font-weight:600; display:block; margin-top:12px; }
-    input, select, textarea {
-      width:100%; padding:10px; border-radius:8px;
-      border:1px solid #d1d5db;
-    }
-    textarea { min-height:80px; }
-    img { width:100%; max-height:260px; object-fit:cover; border-radius:8px; margin-top:10px; display:none; }
-    .btn { margin-top:12px; padding:10px 14px; border-radius:8px; border:none; cursor:pointer; }
-    .btn-save { background:#16a34a; color:#fff; }
-    .btn-upload { background:#2563eb; color:#fff; }
-    .btn-danger { background:#ef4444; color:#fff; }
+    input, select, textarea { width:100%; padding:10px; border-radius:6px; border:1px solid #d1d5db; box-sizing:border-box; }
+    textarea { resize:none; height:80px; }
+
+    #map { height:320px; border-radius:12px; margin-top:10px; }
+    .map-search { display:flex; gap:10px; margin-top:5px; }
+    .map-search input { flex:1; }
+    .map-search button { background:#2563eb; color:white; border:none; padding:0 15px; border-radius:6px; cursor:pointer; }
+
+    .btn { background:#16a34a; color:white; padding:10px 14px; border-radius:8px; border:none; cursor:pointer; margin-top:14px; width:100%; font-size:16px; }
+    .btn-cancel { background:#ef4444; margin-top:10px; }
   </style>
 </head>
 
 <body>
 
 <header>
-  <div class="logo">Hostel Hunt</div>
-  <nav style="display:flex;gap:12px;">
+  <div><strong>Hostel Hunt</strong></div>
+  <nav>
     <a href="index.html">Home</a>
-    <a href="owner_dashboard.html">Owner Dashboard</a>
+    <a href="owner-dashboard.html">Dashboard</a>
   </nav>
 </header>
 
 <div class="container">
-  <div class="card">
-    <h2>Edit Property</h2>
+  <h2>Edit Property</h2>
 
-    <form id="editForm">
+  <label>Property Title</label>
+  <input id="title">
 
-      <label>Title</label>
-      <input id="title" required>
+  <label>City</label>
+  <input id="city">
 
-      <label>Type</label>
-      <select id="type">
-        <option value="hostel">Hostel</option>
-        <option value="pg">PG</option>
-        <option value="room">Room</option>
-        <option value="flat">Flat</option>
-      </select>
+  <label>Address</label>
+  <textarea id="address"></textarea>
 
-      <label>For Gender</label>
-      <select id="gender">
-        <option value="male">Male</option>
-        <option value="female">Female</option>
-        <option value="both">Both</option>
-      </select>
-
-      <label>City</label>
-      <input id="city" required>
-
-      <label>Nearby College</label>
-      <input id="nearbyCollege">
-
-      <label>Address</label>
-      <textarea id="address"></textarea>
-
-      <label>Rent</label>
-      <input type="number" id="rent">
-
-      <label>Available Beds</label>
-      <input type="number" id="beds">
-
-      <label>Facilities</label>
-      <input id="facilities">
-
-      <label>Property Image (max 200KB)</label>
-      <img id="preview">
-
-      <input type="file" id="imageInput" accept="image/*">
-      <button type="button" id="removeImage" class="btn btn-danger" style="display:none;">Remove Image</button>
-
-      <button class="btn btn-save" type="submit">Save Changes</button>
-      <p id="msg"></p>
-    </form>
+  <label>Location Map</label>
+  <div class="map-search">
+    <input type="text" id="mapSearchInput" placeholder="Search location...">
+    <button type="button" id="mapSearchBtn">Find</button>
   </div>
+  <div id="map"></div>
+
+  <input type="hidden" id="lat">
+  <input type="hidden" id="lng">
+
+  <button class="btn">Save Changes</button>
+  <button class="btn btn-cancel" onclick="location.href='owner-dashboard.html'">Cancel</button>
 </div>
 
-<script type="module">
-  import { auth, db } from "./firebase.js";
-  import {
-    doc, getDoc, updateDoc, serverTimestamp
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-  import { onAuthStateChanged }
-    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  const q = new URLSearchParams(location.search);
-  const propertyId = q.get("id");
+<script>
+  const map = L.map('map').setView([20.2961, 85.8245], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-  if (!propertyId) location.href = "owner_dashboard.html";
+  const marker = L.marker([20.2961, 85.8245], { draggable:true }).addTo(map);
 
-  const title = document.getElementById("title");
-  const type = document.getElementById("type");
-  const gender = document.getElementById("gender");
-  const city = document.getElementById("city");
-  const nearbyCollege = document.getElementById("nearbyCollege");
-  const address = document.getElementById("address");
-  const rent = document.getElementById("rent");
-  const beds = document.getElementById("beds");
-  const facilities = document.getElementById("facilities");
+  const latInput = document.getElementById("lat");
+  const lngInput = document.getElementById("lng");
 
-  const imageInput = document.getElementById("imageInput");
-  const preview = document.getElementById("preview");
-  const removeBtn = document.getElementById("removeImage");
-  const msg = document.getElementById("msg");
+  latInput.value = 20.2961;
+  lngInput.value = 85.8245;
 
-  let imageBase64 = "";
-  let removeImage = false;
-
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) return location.href = "login.html";
-
-    const snap = await getDoc(doc(db, "properties", propertyId));
-    if (!snap.exists()) return alert("Property not found");
-
-    const p = snap.data();
-    if (p.ownerId !== user.uid) return alert("Unauthorized");
-
-    title.value = p.title || "";
-    type.value = p.type || "hostel";
-    gender.value = p.forGender || "both";
-    city.value = p.city || "";
-    nearbyCollege.value = p.nearbyCollege || "";
-    address.value = p.address || "";
-    rent.value = p.rent || "";
-    beds.value = p.availableBeds || "";
-    facilities.value = p.facilities || "";
-
-    if (p.imageBase64) {
-      imageBase64 = p.imageBase64;
-      preview.src = imageBase64;
-      preview.style.display = "block";
-      removeBtn.style.display = "inline-block";
-    }
+  marker.on("dragend", () => {
+    const p = marker.getLatLng();
+    latInput.value = p.lat;
+    lngInput.value = p.lng;
   });
 
-  imageInput.onchange = () => {
-    const file = imageInput.files[0];
-    if (!file) return;
+  setTimeout(() => { map.invalidateSize(); }, 300);
 
-    if (file.size > 200 * 1024) {
-      alert("Image must be under 200KB");
-      imageInput.value = "";
-      return;
+  document.getElementById("mapSearchBtn").onclick = async () => {
+    const q = document.getElementById("mapSearchInput").value.trim();
+    if(!q) return alert("Enter location");
+
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=in&limit=1`, {
+        headers: { "User-Agent": "HostelHuntApp/1.0" }
+      });
+
+      const data = await res.json();
+      if(!data.length) return alert("Location not found");
+
+      const lat = parseFloat(data[0].lat);
+      const lon = parseFloat(data[0].lon);
+
+      marker.setLatLng([lat, lon]);
+      map.setView([lat, lon], 16);
+
+      latInput.value = lat;
+      lngInput.value = lon;
+
+    } catch (err) {
+      alert("Map search failed");
+      console.error(err);
     }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      imageBase64 = reader.result;
-      preview.src = imageBase64;
-      preview.style.display = "block";
-      removeBtn.style.display = "inline-block";
-      removeImage = false;
-    };
-    reader.readAsDataURL(file);
-  };
-
-  removeBtn.onclick = () => {
-    imageBase64 = "";
-    removeImage = true;
-    preview.style.display = "none";
-    imageInput.value = "";
-    removeBtn.style.display = "none";
-  };
-
-  document.getElementById("editForm").onsubmit = async (e) => {
-    e.preventDefault();
-    msg.textContent = "Saving...";
-
-    const updates = {
-      title: title.value,
-      type: type.value,
-      forGender: gender.value,
-      city: city.value,
-      nearbyCollege: nearbyCollege.value,
-      address: address.value,
-      rent: Number(rent.value),
-      availableBeds: beds.value ? Number(beds.value) : null,
-      facilities: facilities.value,
-      updatedAt: serverTimestamp()
-    };
-
-    if (removeImage) updates.imageBase64 = "";
-    else if (imageBase64) updates.imageBase64 = imageBase64;
-
-    await updateDoc(doc(db, "properties", propertyId), updates);
-
-    msg.style.color = "green";
-    msg.textContent = "Property updated!";
-    setTimeout(() => location.href = "owner-dashboard.html", 800);
   };
 </script>
 
