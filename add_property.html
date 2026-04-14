@@ -2,193 +2,492 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Add Property – Hostel Hunt</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <title>Add Property – High-End Stays</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    body { background:#f3f4f6; margin:0; font-family:Arial; }
-    header { background:#1e3a8a; color:#fff; padding:14px 20px; display:flex; justify-content:space-between; }
-    header a { color:white; text-decoration:none; margin-left:10px; }
-
-    .form-container {
-      max-width:800px; margin:30px auto; background:#fff; padding:24px;
-      border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,.08);
+    /* ========================================
+      GLASSMORPHISM & ELEGANT DESIGN SYSTEM 
+      ========================================
+    */
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --text-main: #1e293b;
+      --text-muted: #475569;
+      --glass-bg: rgba(255, 255, 255, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.5);
+      --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
     }
-    label { font-weight:600; display:block; margin-top:12px; }
-    input, select, textarea { width:100%; padding:10px; border-radius:6px; border:1px solid #d1d5db; box-sizing:border-box; }
-    textarea { resize:none; height:80px; }
-    
-    #map { height:320px; border-radius:12px; margin-top:10px; }
-    .image-preview { width:100%; max-height:250px; object-fit:cover; border-radius:8px; margin-top:10px; display:none; }
-    
-    .btn { background:#2563eb; color:white; padding:10px 14px; border-radius:8px; border:none; cursor:pointer; margin-top:14px; width:100%; font-size:16px; }
-    
-    /* Search Bar inside Map (Simple) */
-    .map-search { display:flex; gap:10px; margin-top:5px; }
-    .map-search input { flex:1; }
-    .map-search button { background:#2563eb; color:white; border:none; padding:0 15px; border-radius:6px; cursor:pointer; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      color: var(--text-main);
+      background: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(226, 232, 240, 0.6) 100%);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: -1;
+    }
+
+    .glass-panel {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      border-radius: 24px;
+    }
+
+    /* --- Header Navigation --- */
+    header {
+      position: sticky;
+      top: 15px;
+      margin: 0 20px 30px 20px;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 30px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: 50px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+      text-decoration: none;
+    }
+
+    nav a {
+      color: var(--text-main);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 15px;
+      transition: color 0.3s;
+      margin-left: 20px;
+    }
+    nav a:hover { color: var(--primary); }
+
+    /* --- Container & Form --- */
+    .container {
+      max-width: 850px;
+      margin: 0 auto 60px;
+      padding: 0 20px;
+    }
+
+    .page-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .form-card {
+      padding: 40px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .form-row > div {
+      flex: 1;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.8);
+      background: rgba(255, 255, 255, 0.6);
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--text-main);
+      transition: all 0.3s;
+      outline: none;
+      box-sizing: border-box;
+    }
+    input::placeholder, textarea::placeholder { color: #94a3b8; }
+    input:focus, select:focus, textarea:focus {
+      background: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    /* --- Map Section --- */
+    .map-search {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .map-search input { flex: 1; }
+    .map-search button {
+      background: var(--text-main);
+      color: white;
+      border: none;
+      padding: 0 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .map-search button:hover { background: #0f172a; }
+    .map-search button:disabled { background: #94a3b8; cursor: not-allowed; }
+
+    #map {
+      height: 350px;
+      border-radius: 16px;
+      margin-top: 10px;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      z-index: 1;
+    }
+
+    /* --- Multiple Image Preview Grid --- */
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .preview-grid img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* --- Buttons --- */
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      padding: 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+      width: 100%;
+      margin-top: 10px;
+      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+    }
+    .btn-primary:disabled {
+      background: #94a3b8;
+      transform: none;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    #msg {
+      text-align: center;
+      margin-top: 15px;
+      font-weight: 500;
+      color: var(--primary);
+      min-height: 20px;
+    }
+
+    @media (max-width: 600px) {
+      header { flex-direction: column; gap: 15px; border-radius: 20px; padding: 15px; }
+      nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+      nav a { margin-left: 0; }
+      .form-card { padding: 25px 20px; }
+      .form-row { flex-direction: column; gap: 0; margin-bottom: 0; }
+    }
   </style>
 </head>
 
 <body>
-
 <header>
-  <div><strong>Hostel Hunt</strong></div>
+  <a href="index.html" class="logo">Hostel Hunt</a>
   <nav>
     <a href="index.html">Home</a>
-    <a href="owner-dashboard.html">Dashboard</a>
+    <a href="owner-dashboard.html" style="color: var(--primary); font-weight: 600;">Owner Dashboard</a>
   </nav>
 </header>
 
-<div class="form-container">
-  <h2>Add New Property</h2>
+<div class="container">
+  <h2 class="page-title">List a New Property</h2>
+  
+  <div class="glass-panel form-card">
+    <form id="propertyForm">
+      
+      <div class="form-group">
+        <label>Property Title</label>
+        <input id="title" required placeholder="e.g. Premium Boys Hostel">
+      </div>
 
-  <form id="propertyForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Property Type</label>
+          <select id="type">
+            <option value="hostel">Hostel</option>
+            <option value="pg">PG</option>
+            <option value="room">Room</option>
+            <option value="flat">Flat</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Suitable For</label>
+          <select id="gender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="both">Both</option>
+          </select>
+        </div>
+      </div>
 
-    <label>Property Title</label>
-    <input id="title" required placeholder="e.g. Sunshine Boys Hostel">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Payment Mode</label>
+          <select id="paymentMode">
+              <option value="cash_upi">Cash & UPI</option>
+              <option value="cash_only">Cash Only</option>
+              <option value="upi_only">UPI Only</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>UPI ID (For Payments)</label>
+          <input type="text" id="upiId" placeholder="e.g. yourname@okhdfcbank">
+        </div>
+      </div>
 
-    <label>Property Type</label>
-    <select id="type">
-      <option value="hostel">Hostel</option>
-      <option value="pg">PG</option>
-      <option value="room">Room</option>
-      <option value="flat">Flat</option>
-    </select>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Monthly Rent (₹)</label>
+          <input type="number" id="rent" required placeholder="e.g. 5000">
+        </div>
+        <div class="form-group">
+          <label>Available Beds</label>
+          <input type="number" id="beds" placeholder="e.g. 5">
+        </div>
+      </div>
 
-    <label>For Gender</label>
-    <select id="gender">
-      <option value="male">Male</option>
-      <option value="female">Female</option>
-      <option value="both">Both</option>
-    </select>
-    
-    <label>Payment Mode</label>
-    <select id="paymentMode">
-        <option value="cash_upi">Cash & UPI</option>
-        <option value="cash_only">Cash Only</option>
-        <option value="upi_only">UPI Only</option>
-    </select>
+      <div class="form-row">
+        <div class="form-group">
+          <label>City / Area</label>
+          <input id="city" required placeholder="e.g. Bhubaneswar">
+        </div>
+        <div class="form-group">
+          <label>Nearby College / Landmark</label>
+          <input id="nearbyCollege" placeholder="e.g. KIIT University">
+        </div>
+      </div>
 
-    <label>UPI ID (For Payments)</label>
-    <input type="text" id="upiId" placeholder="e.g. 9876543210@ybl">
+      <div class="form-group">
+        <label>Full Address</label>
+        <textarea id="address" required placeholder="Enter the complete property address..."></textarea>
+      </div>
 
-    <label>City</label>
-    <input id="city" required placeholder="e.g. Bhubaneswar">
+      <div class="form-group">
+        <label>Amenities</label>
+        <input id="facilities" placeholder="e.g. WiFi, AC, Laundry, CCTV">
+      </div>
 
-    <label>Nearby College</label>
-    <input id="nearbyCollege" placeholder="e.g. ITER, KIIT">
+      <div class="form-group" style="margin-top: 30px;">
+        <label>Location Map (Drag marker to exact spot)</label>
+        <div class="map-search">
+            <input type="text" id="mapSearchInput" placeholder="Search locality or landmark to center map...">
+            <button type="button" id="mapSearchBtn">Search</button>
+        </div>
+        <div id="map"></div>
+        <input type="hidden" id="lat" value="20.2961">
+        <input type="hidden" id="lng" value="85.8245">
+      </div>
 
-    <label>Full Address</label>
-    <textarea id="address" required></textarea>
+      <div class="form-group" style="margin-top: 30px;">
+        <label>Upload Property Images (Select multiple)</label>
+        <input type="file" id="imageInput" accept="image/*" multiple>
+        <div id="imagePreviewContainer" class="preview-grid"></div>
+      </div>
 
-    <label>Location Map</label>
-    <div class="map-search">
-        <input type="text" id="mapSearchInput" placeholder="Search location...">
-        <button type="button" id="mapSearchBtn">Find</button>
-    </div>
-    <div id="map"></div>
-    <input type="hidden" id="lat"><input type="hidden" id="lng">
-
-    <label>Monthly Rent (₹)</label>
-    <input type="number" id="rent" required>
-
-    <label>Available Beds</label>
-    <input type="number" id="beds">
-
-    <label>Facilities</label>
-    <input id="facilities" placeholder="WiFi, Food, Laundry, CCTV">
-
-    <label>Property Image</label>
-    <input type="file" id="imageInput" accept="image/*">
-    <img id="imagePreview" class="image-preview">
-
-    <button class="btn" type="submit" id="submitBtn">Save Property</button>
-    <p id="msg" style="margin-top:10px; font-weight:bold; text-align:center;"></p>
-  </form>
+      <button class="btn-primary" type="submit" id="submitBtn">Publish Property</button>
+      <p id="msg"></p>
+      
+    </form>
+  </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  var map, marker, geocoder;
+  var mapReady = false;
+
+  window.initMap = function() {
+      const defaultLocation = { lat: 20.2961, lng: 85.8245 }; 
+      
+      map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 13,
+          center: defaultLocation,
+          mapId: "DEMO_MAP_ID", 
+          mapTypeControl: false,
+          streetViewControl: false,
+          gestureHandling: "cooperative"
+      });
+
+      marker = new google.maps.marker.AdvancedMarkerElement({
+          position: defaultLocation,
+          map: map,
+          gmpDraggable: true,
+      });
+
+      geocoder = new google.maps.Geocoder();
+      mapReady = true;
+
+      marker.addListener("dragend", () => {
+          let lat = marker.position.lat;
+          let lng = marker.position.lng;
+          if (typeof lat === 'function') { lat = lat(); lng = lng(); }
+          
+          document.getElementById("lat").value = lat.toFixed(6); 
+          document.getElementById("lng").value = lng.toFixed(6);
+      });
+  };
+</script>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDxF8QDrEWSboPyfqzE6IcylQ1Isl90ZA&loading=async&libraries=places,marker&callback=initMap"></script>
+
 <script type="module">
-  import { auth, db, storage } from "./firebase.js"; 
+  import { auth, db } from "./firebase.js"; 
   import { addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
   let currentUser = null;
   const msg = document.getElementById("msg");
   const submitBtn = document.getElementById("submitBtn");
+  const latInput = document.getElementById("lat");
+  const lngInput = document.getElementById("lng");
 
   onAuthStateChanged(auth, (user) => {
     if (!user) location.href = "login.html";
     currentUser = user;
   });
 
-  // MAP
-  const map = L.map('map').setView([20.2961, 85.8245], 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-  const marker = L.marker([20.2961, 85.8245], { draggable:true }).addTo(map);
-
-  const latInput = document.getElementById("lat");
-  const lngInput = document.getElementById("lng");
-  
-  marker.on("dragend", () => {
-      const p = marker.getLatLng();
-      latInput.value = p.lat; lngInput.value = p.lng;
-  });
-
-  // SEARCH MAP
-  document.getElementById("mapSearchBtn").onclick = async () => {
-      const q = document.getElementById("mapSearchInput").value;
+  document.getElementById("mapSearchBtn").onclick = () => {
+      if (!mapReady) return alert("Map is still loading. Please try again in a moment.");
+      
+      const q = document.getElementById("mapSearchInput").value.trim();
       if(!q) return;
-      // Search Logic (Global + Local)
-      let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=in&limit=1`;
-      try {
-          let res = await fetch(url);
-          let data = await res.json();
-          if(!data.length) {
-              // Retry with city append
-              const city = document.getElementById("city").value;
-              if(city) {
-                  res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + " " + city)}&countrycodes=in&limit=1`);
-                  data = await res.json();
-              }
+
+      const searchBtn = document.getElementById("mapSearchBtn");
+      searchBtn.textContent = "Searching...";
+      searchBtn.disabled = true;
+
+      geocoder.geocode({ address: q + ", India" }, (results, status) => {
+          if (status === "OK") {
+              const location = results[0].geometry.location;
+              
+              map.setCenter(location);
+              map.setZoom(16);
+              marker.position = location; 
+              
+              latInput.value = location.lat().toFixed(6); 
+              lngInput.value = location.lng().toFixed(6);
+          } else { 
+              alert("Location not found. Try a nearby famous landmark or city name."); 
           }
-          if(data.length) {
-              const { lat, lon } = data[0];
-              marker.setLatLng([lat, lon]);
-              map.setView([lat, lon], 16);
-              latInput.value = lat; lngInput.value = lon;
-          } else { alert("Location not found"); }
-      } catch(e) {}
+          searchBtn.textContent = "Search";
+          searchBtn.disabled = false;
+      });
   };
 
-  // IMAGE
+  // MULTIPLE IMAGE PREVIEW LOGIC
   const imageInput = document.getElementById("imageInput");
-  const preview = document.getElementById("imagePreview");
+  const previewContainer = document.getElementById("imagePreviewContainer");
+  
   imageInput.onchange = () => {
-      if(imageInput.files[0]) {
-          const r = new FileReader();
-          r.onload = () => { preview.src = r.result; preview.style.display="block"; };
-          r.readAsDataURL(imageInput.files[0]);
-      }
+      previewContainer.innerHTML = ""; // Clear existing previews
+      const files = Array.from(imageInput.files);
+      
+      files.forEach(file => {
+          if(file) {
+              const r = new FileReader();
+              r.onload = (e) => { 
+                  const img = document.createElement("img");
+                  img.src = e.target.result;
+                  previewContainer.appendChild(img);
+              };
+              r.readAsDataURL(file);
+          }
+      });
   };
 
-  // SUBMIT
+  // SUBMIT TO FIREBASE
   document.getElementById("propertyForm").onsubmit = async (e) => {
     e.preventDefault();
-    msg.textContent = "Saving...";
+    msg.style.color = "#2563eb";
+    msg.textContent = "Converting images and saving property...";
     submitBtn.disabled = true;
+    submitBtn.textContent = "Processing...";
 
     try {
-        let imageUrl = "";
-        const file = imageInput.files[0];
-        if (file) {
-            const refS = ref(storage, `properties/${Date.now()}_${file.name}`);
-            await uploadBytes(refS, file);
-            imageUrl = await getDownloadURL(refS);
+        let uploadedUrls = [];
+        const files = imageInput.files;
+        
+        // Helper function to read file as Base64
+        const fileToBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+        });
+
+        // Loop through and convert all selected images to Base64
+        for (let i = 0; i < files.length; i++) {
+            const base64String = await fileToBase64(files[i]);
+            uploadedUrls.push(base64String);
         }
 
         await addDoc(collection(db, "properties"), {
@@ -196,33 +495,30 @@
           title: document.getElementById("title").value,
           type: document.getElementById("type").value,
           forGender: document.getElementById("gender").value,
-          
-          // Payment
           paymentMode: document.getElementById("paymentMode").value,
           upiId: document.getElementById("upiId").value,
-          
           city: document.getElementById("city").value,
           nearbyCollege: document.getElementById("nearbyCollege").value,
           address: document.getElementById("address").value,
           rent: Number(document.getElementById("rent").value),
           availableBeds: document.getElementById("beds").value,
           facilities: document.getElementById("facilities").value,
-          photoURL: imageUrl,
+          photoURL: uploadedUrls.length > 0 ? uploadedUrls[0] : "", // Saves first image for main display
+          photoURLs: uploadedUrls, // Array containing ALL base64 images
           lat: Number(latInput.value),
           lng: Number(lngInput.value),
           status: "active",
           createdAt: serverTimestamp()
         });
 
-        msg.style.color = "green";
-        msg.textContent = "Property added successfully!";
-        setTimeout(() => location.href = "owner-dashboard.html", 1000);
-
+        msg.style.color = "#10b981";
+        msg.textContent = "Property published successfully!";
+        setTimeout(() => location.href = "owner-dashboard.html", 1500);
     } catch (err) {
-        console.error(err);
-        msg.style.color = "red";
+        msg.style.color = "#ef4444";
         msg.textContent = "Error: " + err.message;
         submitBtn.disabled = false;
+        submitBtn.textContent = "Publish Property";
     }
   };
 </script>
