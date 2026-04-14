@@ -10,10 +10,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* ========================================
-      GLASSMORPHISM & ELEGANT DESIGN SYSTEM 
-      ========================================
-    */
     :root {
       --primary: #2563eb;
       --primary-hover: #1d4ed8;
@@ -54,7 +50,6 @@
       border-radius: 24px;
     }
 
-    /* --- Header Navigation --- */
     header {
       position: sticky;
       top: 15px;
@@ -92,7 +87,6 @@
     #logoutBtn { color: #ef4444; font-weight: 600; }
     #logoutBtn:hover { color: #dc2626; }
 
-    /* --- Container & Layout --- */
     .container {
       max-width: 800px;
       margin: 0 auto 60px;
@@ -107,7 +101,6 @@
       text-align: center;
     }
 
-    /* --- Chat List --- */
     .chat-list {
       overflow: hidden;
       min-height: 400px;
@@ -143,7 +136,7 @@
 
     .chat-info {
       flex: 1;
-      min-width: 0; /* Prevents text overflow issues in flexbox */
+      min-width: 0;
     }
 
     .chat-header-row {
@@ -228,7 +221,6 @@
   onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
       
-      // If owner or admin, show Dashboard link
       const snap = await getDoc(doc(db, "users", user.uid));
       if(snap.exists() && (snap.data().role === "owner" || snap.data().role === "admin")) {
           document.getElementById("dashLink").style.display = "inline-block";
@@ -238,14 +230,13 @@
   });
 
   function loadChats(uid) {
-      // Find chats where I am a participant
       const q = query(
           collection(db, "chats"), 
           where("participants", "array-contains", uid),
           orderBy("lastUpdated", "desc")
       );
 
-      onSnapshot(q, (snapshot) => {
+      onSnapshot(q, async (snapshot) => {
           loading.style.display = "none";
           list.style.display = "block";
           list.innerHTML = "";
@@ -260,16 +251,25 @@
               return;
           }
 
-          snapshot.forEach(d => {
+          for (const d of snapshot.docs) {
               const data = d.data();
               
-              // --- THE FIX: Identify the OTHER person in the chat ---
+              // Find the ID of the person who is NOT you
               const chatPartnerId = data.participants.find(id => id !== uid) || data.ownerId; 
-              
               const propId = data.propertyId;
               const propTitle = data.propertyTitle || "Property Chat";
               
-              // Determine Time
+              // Look up the actual name of the chat partner
+              let partnerName = "User";
+              try {
+                  const partnerSnap = await getDoc(doc(db, "users", chatPartnerId));
+                  if (partnerSnap.exists()) {
+                      partnerName = partnerSnap.data().name || partnerSnap.data().email.split("@")[0];
+                  }
+              } catch (err) {
+                  console.error("Could not fetch user info", err);
+              }
+
               let timeStr = "";
               if (data.lastUpdated) {
                   const date = data.lastUpdated.toDate();
@@ -277,16 +277,15 @@
                   timeStr = isToday ? date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : date.toLocaleDateString('en-IN', {day:'numeric', month:'short'});
               }
 
-              // Dynamic Avatar using UI-Avatars based on Property Title
-              const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(propTitle)}&background=e0f2fe&color=0369a1&rounded=true&bold=true`;
+              const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(partnerName)}&background=e0f2fe&color=0369a1&rounded=true&bold=true`;
 
-              // --- THE FIX: Pass 'otherId' instead of 'ownerId' in the URL ---
+              // Generate the row with the partner's name, and pass their ID in the URL
               const row = `
                 <a href="chat.html?otherId=${chatPartnerId}&propertyId=${propId}" class="chat-item">
                    <img src="${avatarUrl}" class="avatar" alt="Avatar">
                    <div class="chat-info">
                       <div class="chat-header-row">
-                          <div class="chat-name">${propTitle}</div>
+                          <div class="chat-name">${partnerName} <span style="font-size: 13px; color: #64748b; font-weight: 500; margin-left: 5px;">(${propTitle})</span></div>
                           <div class="chat-time">${timeStr}</div>
                       </div>
                       <div class="last-msg">${data.lastMessage || "Click to view message..."}</div>
@@ -294,7 +293,7 @@
                 </a>
               `;
               list.innerHTML += row;
-          });
+          }
       });
   }
 
