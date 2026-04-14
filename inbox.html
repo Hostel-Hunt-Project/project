@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Messages – High-End Stays</title>
-  <!-- INVISIBLE FIX: Added viewport-fit=cover for modern phones -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -263,7 +262,10 @@
 
           snapshot.forEach(d => {
               const data = d.data();
-              const ownerId = data.ownerId; 
+              
+              // --- THE FIX: Identify the OTHER person in the chat ---
+              const chatPartnerId = data.participants.find(id => id !== uid) || data.ownerId; 
+              
               const propId = data.propertyId;
               const propTitle = data.propertyTitle || "Property Chat";
               
@@ -271,7 +273,6 @@
               let timeStr = "";
               if (data.lastUpdated) {
                   const date = data.lastUpdated.toDate();
-                  // If today, show time, else show date
                   const isToday = new Date().toDateString() === date.toDateString();
                   timeStr = isToday ? date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : date.toLocaleDateString('en-IN', {day:'numeric', month:'short'});
               }
@@ -279,8 +280,9 @@
               // Dynamic Avatar using UI-Avatars based on Property Title
               const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(propTitle)}&background=e0f2fe&color=0369a1&rounded=true&bold=true`;
 
+              // --- THE FIX: Pass 'otherId' instead of 'ownerId' in the URL ---
               const row = `
-                <a href="chat.html?ownerId=${ownerId}&propertyId=${propId}" class="chat-item">
+                <a href="chat.html?otherId=${chatPartnerId}&propertyId=${propId}" class="chat-item">
                    <img src="${avatarUrl}" class="avatar" alt="Avatar">
                    <div class="chat-info">
                       <div class="chat-header-row">
