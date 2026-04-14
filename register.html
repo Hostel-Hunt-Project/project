@@ -2,91 +2,320 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Register – Hostel Hunt</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Register – High-End Stays</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        /* Hidden by default, shown only when Admin is selected */
-        #adminCodeGroup { display: none; background: #fff1f2; padding: 10px; border-radius: 8px; border: 1px dashed #e11d48; margin-bottom: 15px; }
+        /* ========================================
+          GLASSMORPHISM & ELEGANT DESIGN SYSTEM 
+          ========================================
+        */
+        :root {
+          --primary: #2563eb;
+          --primary-hover: #1d4ed8;
+          --text-main: #1e293b;
+          --text-muted: #475569;
+          --glass-bg: rgba(255, 255, 255, 0.65);
+          --glass-border: rgba(255, 255, 255, 0.5);
+          --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+          font-family: 'Outfit', sans-serif;
+          color: var(--text-main);
+          background: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop') no-repeat center center fixed;
+          background-size: cover;
+          min-height: 100vh;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* Soft overlay for readability */
+        body::before {
+          content: '';
+          position: fixed;
+          top: 0; left: 0; width: 100%; height: 100%;
+          background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(226, 232, 240, 0.6) 100%);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          z-index: -1;
+        }
+
+        .glass-panel {
+          background: var(--glass-bg);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid var(--glass-border);
+          box-shadow: var(--glass-shadow);
+          border-radius: 24px;
+        }
+
+        /* --- Header Navigation --- */
+        header {
+          position: sticky;
+          top: 15px;
+          margin: 0 20px;
+          z-index: 100;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 15px 30px;
+          background: rgba(255, 255, 255, 0.7);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255,255,255,0.6);
+          border-radius: 50px;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .logo {
+          font-size: 24px;
+          font-weight: 700;
+          color: var(--primary);
+          letter-spacing: -0.5px;
+          text-decoration: none;
+        }
+
+        nav a {
+          color: var(--text-main);
+          text-decoration: none;
+          font-weight: 500;
+          font-size: 15px;
+          transition: color 0.3s;
+        }
+        nav a:hover { color: var(--primary); }
+
+        .btn-primary {
+          background: var(--primary);
+          color: #fff;
+          padding: 10px 24px;
+          border-radius: 30px;
+          font-weight: 600;
+          text-decoration: none;
+          border: none;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          font-family: inherit;
+          display: inline-block;
+          text-align: center;
+          box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+        .btn-primary:hover {
+          background: var(--primary-hover);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        /* --- Auth Container --- */
+        .auth-wrapper {
+          flex: 1;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 40px 20px;
+        }
+
+        .auth-card {
+          width: 100%;
+          max-width: 650px; /* Wider for dual-column layout */
+          padding: 40px;
+        }
+
+        .auth-header {
+          text-align: center;
+          margin-bottom: 30px;
+        }
+
+        .auth-header h2 {
+          font-size: 32px;
+          font-weight: 700;
+          color: #0f172a;
+          margin-bottom: 8px;
+        }
+
+        .auth-header p {
+          color: var(--text-muted);
+          font-size: 15px;
+        }
+
+        /* Form Grid Layout */
+        .form-row {
+          display: flex;
+          gap: 20px;
+          margin-bottom: 20px;
+        }
+        .form-row > .form-group {
+          flex: 1;
+          margin-bottom: 0;
+        }
+        .form-group { margin-bottom: 20px; }
+
+        label {
+          display: block;
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--text-muted);
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        input, select {
+          width: 100%;
+          padding: 14px 16px;
+          border-radius: 12px;
+          border: 1px solid rgba(255,255,255,0.8);
+          background: rgba(255, 255, 255, 0.6);
+          font-family: inherit;
+          font-size: 15px;
+          color: var(--text-main);
+          transition: all 0.3s;
+          outline: none;
+        }
+        input::placeholder { color: #94a3b8; }
+        input:focus, select:focus {
+          background: #fff;
+          border-color: var(--primary);
+          box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+
+        /* Admin Secret Code Box */
+        #adminCodeGroup {
+          display: none; 
+          background: rgba(254, 226, 226, 0.6); 
+          padding: 20px; 
+          border-radius: 16px; 
+          border: 1px dashed rgba(225, 29, 72, 0.5); 
+          margin-bottom: 20px;
+        }
+        #adminCodeGroup label { color: #e11d48; }
+
+        .form-actions {
+          margin-top: 30px;
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+          text-align: center;
+        }
+
+        .text-link {
+          color: var(--primary);
+          text-decoration: none;
+          font-weight: 500;
+          font-size: 14px;
+          transition: color 0.2s;
+        }
+        .text-link:hover {
+          color: var(--primary-hover);
+          text-decoration: underline;
+        }
+
+        #registerMessage {
+          text-align: center;
+          font-weight: 500;
+          font-size: 14px;
+          margin-top: 15px;
+          min-height: 20px;
+        }
+
+        @media (max-width: 600px) {
+          header { flex-direction: column; gap: 15px; border-radius: 20px; padding: 15px; }
+          .auth-card { padding: 30px 20px; }
+          .form-row { flex-direction: column; gap: 20px; }
+        }
     </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">Hostel Hunt</div>
-
-  <nav id="mainNav" style="display:flex;align-items:center;gap:12px;">
+  <a href="index.html" class="logo">Hostel Hunt</a>
+  <nav style="display:flex;align-items:center;gap:15px;">
     <a href="index.html">Home</a>
     <a href="login.html" id="loginNav">Login</a>
-    <a href="register.html" id="signupNav" class="btn">Sign up</a>
+    <a href="register.html" id="signupNav" class="btn-primary" style="box-shadow:none;">Sign up</a>
   </nav>
 </header>
 
-<div class="form-page">
-    <h2>Create an Account</h2>
-    <p class="small">Free sign-up for students, owners, and admins.</p>
-
-    <form id="registerForm">
-        <div class="form-group">
-            <label>Full Name</label>
-            <input type="text" name="name" placeholder="Your name" required>
+<div class="auth-wrapper">
+    <div class="glass-panel auth-card">
+        <div class="auth-header">
+            <h2>Create an Account</h2>
+            <p>Free sign-up for students, property owners, and admins.</p>
         </div>
 
-        <div class="form-group">
-            <label>Email</label>
-            <input type="email" name="email" placeholder="you@example.com" required>
-        </div>
+        <form id="registerForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="name" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" placeholder="you@example.com" required>
+                </div>
+            </div>
 
-        <div class="form-group">
-            <label>Phone</label>
-            <input type="text" name="phone" placeholder="10 digit mobile">
-        </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="Min. 6 characters" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" name="confirm_password" placeholder="Re-enter password" required>
+                </div>
+            </div>
 
-        <div class="form-group">
-            <label>Password</label>
-            <input type="password" name="password" required>
-        </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" name="phone" placeholder="10 digit mobile">
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select name="gender">
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+            </div>
 
-        <div class="form-group">
-            <label>Confirm Password</label>
-            <input type="password" name="confirm_password" required>
-        </div>
+            <div class="form-group">
+                <label>Register As</label>
+                <select name="role" id="roleSelect">
+                    <option value="student">Student / Bachelor</option>
+                    <option value="owner">Property Owner</option>
+                    <option value="admin">System Admin (Restricted)</option> 
+                </select>
+            </div>
 
-        <div class="form-group">
-            <label>Register as</label>
-            <select name="role" id="roleSelect">
-                <option value="student">Student / Bachelor</option>
-                <option value="owner">Owner</option>
-                <option value="admin">Admin (Restricted)</option> </select>
-        </div>
+            <div id="adminCodeGroup">
+                <label>🔒 Admin Secret Code</label>
+                <input type="password" id="secretCode" placeholder="Enter security key to continue">
+                <small style="color:#9f1239; margin-top:6px; display:block;">Authorization required for admin registration.</small>
+            </div>
 
-        <div id="adminCodeGroup" class="form-group">
-            <label style="color:#e11d48; font-weight:bold;">Admin Secret Code</label>
-            <input type="text" id="secretCode" placeholder="Enter security key to continue">
-            <small style="color:#666;">Required for admin registration.</small>
-        </div>
+            <div class="form-group">
+                <label>College / University <span style="text-transform:none; color:#94a3b8; font-weight:normal;">(For students)</span></label>
+                <input type="text" name="college_name" placeholder="e.g. XYZ University">
+            </div>
 
-        <div class="form-group">
-            <label>Gender</label>
-            <select name="gender">
-                <option value="">Select</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-            </select>
-        </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary" style="width: 100%; padding: 16px; font-size: 16px;">Create Account</button>
+                <a href="login.html" class="text-link">Already registered? Log in here</a>
+            </div>
 
-        <div class="form-group">
-            <label>College / University (for students)</label>
-            <input type="text" name="college_name" placeholder="e.g. XYZ University">
-        </div>
-
-        <div class="form-actions">
-            <button type="submit" class="btn-primary">Create account</button>
-            <a href="login.html" class="text-link">Already registered? Login</a>
-        </div>
-
-        <p id="registerMessage" class="small" style="margin-top:10px;"></p>
-    </form>
+            <p id="registerMessage"></p>
+        </form>
+    </div>
 </div>
 
 <script type="module">
@@ -94,7 +323,7 @@
   import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-  import { firebaseConfig } from "./firebase.js"; // Reuse your config
+  import { firebaseConfig } from "./firebase.js"; 
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
@@ -112,7 +341,7 @@
       }
   });
 
-  // Header Logic (Same as before)
+  // Header Logic
   const loginNav = document.getElementById("loginNav");
   const signupNav = document.getElementById("signupNav");
   
@@ -133,12 +362,13 @@
   function showMessage(text, type = "success") {
     msg.innerText = text;
     msg.style.display = "block";
-    msg.style.color = type === "success" ? "green" : "red";
+    msg.style.color = type === "success" ? "#10b981" : "#ef4444"; // Emerald Green : Tailwind Red
   }
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    msg.innerText = "";
+    msg.innerText = "Processing registration...";
+    msg.style.color = "#2563eb";
 
     const formData = new FormData(form);
     const name = formData.get("name");
@@ -160,7 +390,7 @@
     }
 
     if (password !== confirmPassword) {
-      showMessage("Password and confirm password do not match.", "error");
+      showMessage("Passwords do not match.", "error");
       return;
     }
 
@@ -184,11 +414,13 @@
 
       setTimeout(() => {
         window.location.href = "login.html";
-      }, 1200);
+      }, 1500);
     } catch (err) {
       console.error(err);
       if (err.code === "auth/email-already-in-use") {
         showMessage("This email is already registered.", "error");
+      } else if (err.code === "auth/weak-password") {
+        showMessage("Password should be at least 6 characters.", "error");
       } else {
         showMessage("Error: " + err.message, "error");
       }
