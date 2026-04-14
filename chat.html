@@ -2,63 +2,314 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Chat – Hostel Hunt</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="style.css" />
+  <title>Chat – High-End Stays</title>
+  <!-- INVISIBLE FIX: Added viewport-fit=cover for modern phones -->
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
-    body { background:#f3f4f6; margin:0; font-family:Arial, sans-serif; }
-    header { background:#1e3a8a; color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
-    .logo { font-weight:700; }
-    .chat-container { max-width:900px; margin:18px auto; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.06); display:flex; flex-direction:column; height:75vh; }
-    .chat-header { padding:12px 16px; display:flex; gap:12px; align-items:center; border-bottom:1px solid #eee; }
-    .chat-header img { width:44px; height:44px; border-radius:50%; object-fit:cover; }
-    .chat-body { flex:1; padding:12px; overflow:auto; background:linear-gradient(#fff,#fafafa); }
-    .message { max-width:72%; padding:10px 12px; border-radius:12px; margin-bottom:10px; display:inline-block; clear:both; word-wrap:break-word; }
-    .message.me { background:#2563eb; color:white; margin-left:auto; border-bottom-right-radius:4px; }
-    .message.them { background:#f1f5f9; color:#111; margin-right:auto; border-bottom-left-radius:4px; }
-    .meta { font-size:12px; color:#666; margin-bottom:6px; display:block; }
-    .chat-input { padding:10px; border-top:1px solid #eee; display:flex; gap:8px; align-items:center; }
-    .chat-input input, .chat-input textarea { flex:1; padding:10px 12px; border-radius:8px; border:1px solid #d1d5db; font-size:14px; }
-    .send-btn { background:#16a34a; color:white; padding:10px 14px; border-radius:8px; border:none; cursor:pointer; font-weight:600; }
-    .small { font-size:12px; color:#666; }
-    .empty { text-align:center; color:#888; padding:24px 8px; }
-    .status { font-size:12px; color:#666; margin-left:8px; }
-    @media(max-width:600px){ .chat-container{height:78vh;} }
+    /* ========================================
+      GLASSMORPHISM & ELEGANT DESIGN SYSTEM 
+      ========================================
+    */
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --text-main: #1e293b;
+      --text-muted: #475569;
+      --glass-bg: rgba(255, 255, 255, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.5);
+      --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      color: var(--text-main);
+      background: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop') no-repeat center center fixed;
+      background-size: cover;
+      /* INVISIBLE FIX: 100dvh + overscroll prevents keyboard overlapping and screen bouncing */
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overscroll-behavior-y: none;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(226, 232, 240, 0.6) 100%);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: -1;
+    }
+
+    .glass-panel {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      border-radius: 20px;
+    }
+
+    /* --- Header Navigation --- */
+    header {
+      flex-shrink: 0;
+      margin: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 30px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: 50px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      z-index: 10;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+      text-decoration: none;
+    }
+
+    nav { display: flex; align-items: center; gap: 20px; }
+    nav a {
+      color: var(--text-main);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 15px;
+      transition: color 0.3s;
+    }
+    nav a:hover { color: var(--primary); }
+    #logoutBtn { color: #ef4444; font-weight: 600; }
+    #logoutBtn:hover { color: #dc2626; }
+
+    /* --- Chat Container --- */
+    .chat-wrapper {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      padding: 0 20px 20px;
+      overflow: hidden; /* prevents wrapper scrolling */
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* --- Chat Header --- */
+    .chat-header {
+      padding: 15px 25px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+      background: rgba(255,255,255,0.4);
+    }
+    
+    #otherAvatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    #otherName {
+      font-weight: 700;
+      font-size: 16px;
+      color: #0f172a;
+    }
+
+    #propertyInfo {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .status {
+      font-size: 13px;
+      font-weight: 600;
+      color: #10b981; /* Emerald green for typing */
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+
+    /* --- Chat Body (Messages) --- */
+    .chat-body {
+      flex: 1;
+      padding: 20px 25px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      scroll-behavior: smooth;
+    }
+
+    /* Custom Scrollbar for chat body */
+    .chat-body::-webkit-scrollbar { width: 6px; }
+    .chat-body::-webkit-scrollbar-track { background: transparent; }
+    .chat-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+
+    .message {
+      max-width: 75%;
+      padding: 12px 18px;
+      border-radius: 18px;
+      font-size: 15px;
+      line-height: 1.5;
+      word-wrap: break-word;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      position: relative;
+    }
+
+    .message.me {
+      background: var(--primary);
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.them {
+      background: #fff;
+      color: #0f172a;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .meta {
+      font-size: 11px;
+      opacity: 0.8;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    .message.me .meta { color: rgba(255,255,255,0.8); text-align: right; }
+    .message.them .meta { color: var(--text-muted); }
+
+    .empty {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 40px 20px;
+      font-size: 15px;
+      margin: auto; /* Centers in flex container */
+    }
+
+    /* --- Chat Input --- */
+    .chat-input {
+      padding: 20px 25px;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: rgba(255,255,255,0.4);
+    }
+
+    #textInput {
+      flex: 1;
+      padding: 14px 20px;
+      border-radius: 30px;
+      border: 1px solid rgba(0,0,0,0.1);
+      background: rgba(255, 255, 255, 0.8);
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--text-main);
+      transition: all 0.3s;
+      outline: none;
+    }
+    #textInput::placeholder { color: #94a3b8; }
+    #textInput:focus {
+      background: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+
+    .send-btn {
+      background: var(--primary);
+      color: white;
+      padding: 14px 24px;
+      border-radius: 30px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 15px;
+      font-family: inherit;
+      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+      transition: all 0.3s ease;
+    }
+    .send-btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+    }
+
+    @media (max-width: 600px) {
+      header { flex-direction: column; gap: 10px; padding: 12px; margin: 10px; border-radius: 16px; }
+      nav { flex-wrap: wrap; justify-content: center; }
+      .chat-wrapper { padding: 0 10px 10px; }
+      .message { max-width: 85%; }
+      .chat-header { padding: 15px; }
+      /* INVISIBLE FIX: Accounts for iPhone home bar area in the input box */
+      .chat-input { padding: 15px 15px calc(15px + env(safe-area-inset-bottom)); }
+    }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">Hostel Hunt</div>
-  <div style="display:flex;align-items:center;gap:12px;">
-    <a href="index.html" style="color:#fff;text-decoration:none">Home</a>
-    <a href="inbox.html" style="color:#fff;text-decoration:none">Messages</a>
-    <a href="#" id="logoutBtn" style="color:#fff;text-decoration:none">Logout</a>
-  </div>
+  <a href="index.html" class="logo">Hostel Hunt</a>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="inbox.html" style="color: var(--primary); font-weight: 600;">Messages</a>
+    <a href="#" id="logoutBtn">Logout</a>
+  </nav>
 </header>
 
-<div class="chat-container" id="chatWrap" aria-live="polite">
-  <div class="chat-header" id="chatHeader">
-    <img id="otherAvatar" src="https://via.placeholder.com/150" alt="Owner"/>
-    <div>
-      <div id="otherName" style="font-weight:700;">Loading...</div>
-      <div class="small" id="propertyInfo">Property</div>
-    </div>
-    <div style="margin-left:auto;">
-      <span class="small status" id="typingStatus" style="display:none;">Typing...</span>
-    </div>
-  </div>
+<div class="chat-wrapper">
+    <div class="glass-panel chat-container" id="chatWrap" aria-live="polite">
+      
+      <div class="chat-header" id="chatHeader">
+        <img id="otherAvatar" src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=2080&auto=format&fit=crop" alt="User Avatar"/>
+        <div style="flex: 1;">
+          <div id="otherName">Connecting...</div>
+          <div id="propertyInfo">Fetching property details</div>
+        </div>
+        <div>
+          <span class="status" id="typingStatus" style="display:none;">typing...</span>
+        </div>
+      </div>
 
-  <div class="chat-body" id="messages"></div>
+      <div class="chat-body" id="messages"></div>
 
-  <div class="chat-input">
-    <input id="textInput" placeholder="Write a message..." autocomplete="off" />
-    <button id="sendBtn" class="send-btn">Send</button>
-  </div>
+      <div class="chat-input">
+        <input id="textInput" placeholder="Type your message here..." autocomplete="off" />
+        <button id="sendBtn" class="send-btn">Send</button>
+      </div>
+      
+    </div>
 </div>
 
 <script type="module">
-  // Import from your existing firebase.js to share Auth state
   import { auth, db } from "./firebase.js"; 
   import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
   import {
@@ -90,7 +341,7 @@
   let currentUser = null;
   let chatDocRef = null;
   let messagesUnsub = null;
-  let propTitle = "Property"; // Default title
+  let propTitle = "Property"; 
 
   logoutBtn.addEventListener("click", async (e) => {
     e.preventDefault();
@@ -98,7 +349,12 @@
     location.href = "login.html";
   });
 
-  function scrollToBottom() { messagesDiv.scrollTop = messagesDiv.scrollHeight; }
+  function scrollToBottom() { 
+      // Slight delay to ensure DOM is updated before scrolling
+      setTimeout(() => {
+          messagesDiv.scrollTop = messagesDiv.scrollHeight; 
+      }, 50);
+  }
 
   function renderMessage(m) {
     const el = document.createElement("div");
@@ -106,8 +362,18 @@
 
     const meta = document.createElement("div");
     meta.className = "meta";
-    const timeVal = m.time?.toDate ? m.time.toDate() : (m.time ? new Date(m.time) : new Date());
-    meta.textContent = (m.senderName || (m.senderId === currentUser.uid ? "You" : "User")) + " • " + timeVal.toLocaleString();
+    
+    // Improved time formatting
+    let timeStr = "";
+    if (m.time?.toDate) {
+        timeStr = m.time.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    } else if (m.time) {
+        timeStr = new Date(m.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    } else {
+        timeStr = "Just now";
+    }
+
+    meta.textContent = (m.senderName || (m.senderId === currentUser.uid ? "You" : "User")) + " • " + timeStr;
     el.appendChild(meta);
 
     const text = document.createElement("div");
@@ -127,7 +393,6 @@
     currentUser = user;
 
     if (!ownerId || !propertyId) {
-       // If missing params, try to recover or just go to inbox
        return location.href = "inbox.html";
     }
 
@@ -136,18 +401,22 @@
       const ownerSnap = await getDoc(doc(db, "users", ownerId));
       const owner = ownerSnap.exists() ? ownerSnap.data() : {};
       otherName.textContent = owner.name || owner.email || "Owner";
-      otherAvatar.src = owner.photoURL || "https://via.placeholder.com/150";
+      if(owner.photoURL || owner.photoBase64) {
+          otherAvatar.src = owner.photoBase64 || owner.photoURL;
+      }
     } catch (err) {
       otherName.textContent = "Chat";
     }
 
-    // 2. Load Property Title (Important for Inbox)
+    // 2. Load Property Title
     try {
       const pSnap = await getDoc(doc(db, "properties", propertyId));
       if (pSnap.exists()) {
         const p = pSnap.data();
         propTitle = p.title || "Property";
-        propertyInfo.textContent = `Property: ${propTitle}`;
+        propertyInfo.textContent = `Regarding: ${propTitle}`;
+      } else {
+        propertyInfo.textContent = "Property details unavailable";
       }
     } catch (err) { /* ignore */ }
 
@@ -157,7 +426,6 @@
 
     const chatSnap = await getDoc(chatDocRef);
     if (!chatSnap.exists()) {
-      // 🔥 THIS IS THE FIX: Saving ownerId and propertyTitle for the Inbox
       await setDoc(chatDocRef, {
         participants: [currentUser.uid, ownerId],
         ownerId: ownerId, 
@@ -178,7 +446,7 @@
       if (snap.empty) {
         const e = document.createElement("div");
         e.className = "empty";
-        e.textContent = "No messages yet — say hi 👋";
+        e.innerHTML = "<span style='font-size:30px; display:block; margin-bottom:10px;'>👋</span> Say hi to start the conversation";
         messagesDiv.appendChild(e);
         return;
       }
@@ -190,8 +458,6 @@
     onSnapshot(chatDocRef, (d) => {
       const data = d.data();
       if (!data) return;
-      // Show typing if the OTHER person is typing
-      // We check if any key in 'typing' is true EXCEPT our own
       if(data.typing) {
          const isSomeoneTyping = Object.keys(data.typing).some(uid => uid !== currentUser.uid && data.typing[uid] === true);
          typingStatus.style.display = isSomeoneTyping ? "inline" : "none";
@@ -233,11 +499,10 @@
 
     try {
       await addDoc(msgsRef, msg);
-      // Update the main chat doc so it shows up at the top of Inbox
       await updateDoc(chatDocRef, { 
           lastMessage: text, 
           lastUpdated: serverTimestamp(),
-          propertyTitle: propTitle // Ensure title is always fresh
+          propertyTitle: propTitle 
       });
       textInput.value = "";
       setTyping(false);
