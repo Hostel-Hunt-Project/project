@@ -2,8 +2,311 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Hostel Hunt – Find Hostel & PG</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Hostel Hunt – High-End Stays</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ========================================
+      GLASSMORPHISM & ELEGANT DESIGN SYSTEM 
+      ========================================
+    */
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --text-main: #1e293b;
+      --text-muted: #475569;
+      --glass-bg: rgba(255, 255, 255, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.5);
+      --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      color: var(--text-main);
+      background: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(226, 232, 240, 0.6) 100%);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: -1;
+    }
+
+    .glass-panel {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      border-radius: 20px;
+    }
+
+    /* --- Header Navigation --- */
+    header {
+      position: sticky;
+      top: 15px;
+      margin: 0 20px 30px 20px;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 30px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: 50px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+    }
+
+    nav a {
+      color: var(--text-main);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 15px;
+      transition: color 0.3s;
+    }
+    nav a:hover { color: var(--primary); }
+
+    .btn, .btn-primary {
+      padding: 10px 24px;
+      border-radius: 30px;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+    
+    .btn {
+      background: rgba(255, 255, 255, 0.8);
+      color: var(--text-main);
+      border: 1px solid var(--glass-border);
+    }
+    .btn:hover { background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+    }
+
+    #logoutNav { background: #ef4444; color: white; padding: 8px 16px; border-radius: 30px; }
+    #logoutNav:hover { background: #dc2626; }
+
+    /* --- Hero Section --- */
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1200px;
+      margin: 60px auto;
+      padding: 0 20px;
+      gap: 50px;
+    }
+
+    .hero-left { flex: 1; }
+    
+    .badge {
+      display: inline-block;
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--primary);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      border: 1px solid rgba(37, 99, 235, 0.2);
+    }
+
+    .hero h1 {
+      font-size: 54px;
+      line-height: 1.1;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #0f172a;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+
+    .search-box {
+      padding: 30px;
+      margin-bottom: 15px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .search-row > div { flex: 1; }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.8);
+      background: rgba(255, 255, 255, 0.5);
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--text-main);
+      transition: all 0.3s;
+      outline: none;
+    }
+    input:focus, select:focus {
+      background: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+
+    .hero-right {
+      flex: 1;
+      position: relative;
+    }
+    .hero-right img {
+      width: 100%;
+      border-radius: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      transform: perspective(1000px) rotateY(-5deg);
+      transition: transform 0.5s ease;
+    }
+    .hero-right img:hover { transform: perspective(1000px) rotateY(0deg); }
+
+    /* --- Results Section --- */
+    .section {
+      max-width: 1200px;
+      margin: 0 auto 80px;
+      padding: 0 20px;
+    }
+    .section h2 {
+      font-size: 32px;
+      margin-bottom: 0; /* Reset for flexbox layout */
+      color: #0f172a;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 30px;
+    }
+
+    .property-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      overflow: hidden;
+      transition: all 0.4s ease;
+      cursor: pointer;
+    }
+    .property-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+      background: rgba(255,255,255,0.85);
+    }
+
+    .property-card img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .property-content { padding: 24px; }
+    
+    .property-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .property-meta {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .price {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 15px 0;
+    }
+
+    .rating-badge {
+      background: rgba(254, 243, 199, 0.7);
+      color: #b45309;
+      font-weight: 600;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid rgba(252, 211, 77, 0.5);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .hero { flex-direction: column; text-align: center; margin: 30px auto; }
+      .search-row { flex-direction: column; }
+      header { flex-direction: column; gap: 15px; border-radius: 20px; }
+      nav { flex-wrap: wrap; justify-content: center; }
+      .hero-right img { transform: none; }
+      .section-header { flex-direction: column; gap: 15px; align-items: flex-start !important; }
+    }
+    
+    /* Override Google Autocomplete styles to match site theme */
+    .pac-container {
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255,255,255,0.8);
+        font-family: 'Outfit', sans-serif;
+    }
+  </style>
 </head>
 
 <body>
@@ -11,42 +314,42 @@
 <header>
   <div class="logo">Hostel Hunt</div>
 
-  <nav id="mainNav" style="display:flex;align-items:center;gap:12px;">
+  <nav id="mainNav" style="display:flex;align-items:center;gap:15px;">
     <a href="index.html">Home</a>
 
+    <a href="my-bookings.html" id="myBookingsLink" style="display:none;">My Bookings</a>
     <a href="inbox.html" id="messagesLink" style="display:none;">Messages</a>
 
     <a href="owner-dashboard.html" id="ownerDashboardLink" style="display:none;">Owner Dashboard</a>
-    <a href="admin-dashboard.html" id="adminDashboardLink" style="display:none; color:#fbbf24;">⚡ Admin</a>
+    <a href="admin-dashboard.html" id="adminDashboardLink" style="display:none; color:#d97706; font-weight:700;">⚡ Admin</a>
 
     <a href="login.html" id="loginNav">Login</a>
-    <a href="register.html" id="signupNav" class="btn">Sign up</a>
+    <a href="register.html" id="signupNav" class="btn-primary">Sign up</a>
 
-    <a href="profile.html" id="meProfileLink" style="display:none;align-items:center;gap:8px;text-decoration:none;">
-      <img id="navAvatar" src="https://via.placeholder.com/36" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #fff;">
-      <span id="navName" style="font-weight:600;"></span>
+    <a href="profile.html" id="meProfileLink" style="display:none;align-items:center;gap:10px;text-decoration:none;">
+      <img id="navAvatar" src="https://via.placeholder.com/40" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">
+      <span id="navName" style="font-weight:600; color:var(--text-main);"></span>
     </a>
 
-    <a href="#" id="logoutNav" style="display:none;color:#fff;background:#ef4444;padding:6px 10px;border-radius:6px;">Logout</a>
+    <a href="#" id="logoutNav" style="display:none;">Logout</a>
   </nav>
 </header>
 
 <section class="hero">
   <div class="hero-left">
-    <span class="badge">For Students & Bachelors</span>
+    <span class="badge">Elevated Student Living</span>
 
-    <h1>Find the best Hostel, PG or Room near your college</h1>
+    <h1>Discover premium stays near your campus.</h1>
     <p>
-      Search location-wise hostels, PGs and rooms with filters for gender,
-      budget and facilities. Directly connect with verified owners.
+      Find curated, high-quality Hostels, PGs, and Rooms tailored for your lifestyle. Connect directly with verified owners in seconds.
     </p>
 
-    <div class="search-box">
+    <div class="glass-panel search-box">
       <form id="searchForm">
         <div class="search-row">
           <div>
-            <label>City / Area</label>
-            <input type="text" id="locationInput" placeholder="e.g. Bhubaneswar, Khandagiri">
+            <label>City / Area (Powered by Google)</label>
+            <input type="text" id="locationInput" placeholder="Start typing a city or area...">
           </div>
           <div>
             <label>Near College</label>
@@ -58,7 +361,7 @@
           <div>
             <label>Type</label>
             <select id="typeInput">
-              <option value="">Any</option>
+              <option value="">Any Category</option>
               <option value="hostel">Hostel</option>
               <option value="pg">PG</option>
               <option value="room">Room</option>
@@ -66,7 +369,7 @@
             </select>
           </div>
           <div>
-            <label>For</label>
+            <label>Gender preference</label>
             <select id="genderInput">
               <option value="">Male / Female / Both</option>
               <option value="male">Male</option>
@@ -75,44 +378,140 @@
             </select>
           </div>
           <div>
-            <label>Max Budget (per month)</label>
-            <input type="number" id="maxRentInput" placeholder="6000">
+            <label>Max Budget (Monthly)</label>
+            <input type="number" id="maxRentInput" placeholder="₹6000">
           </div>
         </div>
 
         <div style="margin-top:10px;">
-          <label>Facilities (comma separated)</label>
-          <input type="text" id="facilitiesInput" placeholder="e.g. Wi-Fi, Laundry, CCTV">
+          <label>Amenities (comma separated)</label>
+          <input type="text" id="facilitiesInput" placeholder="e.g. Wi-Fi, AC, Laundry">
         </div>
 
-        <div style="margin-top:12px;">
-          <button type="submit" class="btn-primary">Search</button>
-          <button type="button" id="clearBtn" class="btn" style="margin-left:8px;">Clear</button>
+        <div style="margin-top:20px; display:flex; gap:12px;">
+          <button type="submit" class="btn-primary" style="flex:2; padding: 14px;">Find My Stay</button>
+          <button type="button" id="clearBtn" class="btn" style="flex:1;">Clear</button>
         </div>
       </form>
     </div>
 
-    <p style="font-size:13px;color:#555;">
-      Tip: Login to get personalised recommendations based on your college.
+    <p style="font-size:14px;color:var(--text-muted); margin-top:15px; font-weight: 500;">
+      ✨ Login to unlock personalized campus recommendations.
     </p>
   </div>
 
   <div class="hero-right">
-    <img src="https://images.pexels.com/photos/439391/pexels-photo-439391.jpeg" style="width:100%;border-radius:14px;">
+    <img src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070&auto=format&fit=crop" alt="Elegant Room Interior">
   </div>
 </section>
 
 <section class="section">
-  <h2>Search Results</h2>
+  <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h2>Featured Properties</h2>
+    
+    <div class="glass-panel" style="display: inline-flex; padding: 5px; border-radius: 30px; gap: 5px;">
+      <button id="showListBtn" class="btn-primary" style="margin: 0; padding: 8px 20px; box-shadow: none;">📄 List</button>
+      <button id="showMapBtn" class="btn" style="margin: 0; padding: 8px 20px; border: none; background: transparent;">🗺️ Map</button>
+    </div>
+  </div>
+
   <div class="card-grid" id="featuredList"></div>
-  <p id="resultsMessage" style="text-align:center;margin-top:12px;color:#555;"></p>
+  
+  <div id="mapViewContainer" class="glass-panel" style="display: none; height: 600px; width: 100%; padding: 10px;">
+    <div id="globalSearchMap" style="width: 100%; height: 100%; border-radius: 16px;"></div>
+  </div>
+
+  <p id="resultsMessage" style="text-align:center;margin-top:20px;color:var(--text-muted); font-size: 16px;"></p>
 </section>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCDxF8QDrEWSboPyfqzE6IcylQ1Isl90ZA&loading=async&libraries=places,marker&callback=initPlaces"></script>
 
 <script type="module">
   import { auth, db } from "./firebase.js";
   import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import { collection, query, getDocs, orderBy, limit, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { collection, query, getDocs, orderBy, limit, doc, getDoc, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+  // ==========================================
+  // INITIALIZE GOOGLE PLACES & GLOBAL MAP
+  // ==========================================
+  let globalMap = null;
+  let globalMarkers = [];
+  let currentMapBounds = null;
+  let infoWindow = null;
+
+  window.initPlaces = () => {
+      // 1. Init Autocomplete
+      const input = document.getElementById("locationInput");
+      const autocomplete = new google.maps.places.Autocomplete(input, {
+          componentRestrictions: { country: "in" } 
+      });
+
+      autocomplete.addListener("place_changed", () => {
+          const place = autocomplete.getPlace();
+          if (place.name) input.value = place.name; 
+      });
+
+      // 2. Pre-init the Global Map
+      globalMap = new google.maps.Map(document.getElementById('globalSearchMap'), {
+          zoom: 13,
+          center: { lat: 20.296, lng: 85.824 }, // Default fallback center
+          mapId: "DEMO_MAP_ID",
+          mapTypeControl: false,
+          streetViewControl: false,
+          gestureHandling: "cooperative"
+      });
+      infoWindow = new google.maps.InfoWindow();
+      
+      // Auto-load properties on first visit
+      window.runSearch();
+  };
+
+  // --- VIEW TOGGLE LOGIC ---
+  const listBtn = document.getElementById("showListBtn");
+  const mapBtn = document.getElementById("showMapBtn");
+  const gridView = document.getElementById("featuredList");
+  const mapViewContainer = document.getElementById("mapViewContainer");
+
+  listBtn.onclick = (e) => {
+    e.preventDefault();
+    listBtn.className = "btn-primary";
+    listBtn.style.background = "";
+    listBtn.style.color = "";
+    
+    mapBtn.className = "btn";
+    mapBtn.style.background = "transparent";
+    
+    gridView.style.display = "grid";
+    mapViewContainer.style.display = "none";
+  };
+
+  mapBtn.onclick = (e) => {
+    e.preventDefault();
+    mapBtn.className = "btn-primary";
+    mapBtn.style.background = "";
+    mapBtn.style.color = "";
+    
+    listBtn.className = "btn";
+    listBtn.style.background = "transparent";
+    
+    gridView.style.display = "none";
+    mapViewContainer.style.display = "block";
+    
+    // Refresh map bounds when unhidden
+    if (globalMap) {
+        google.maps.event.trigger(globalMap, 'resize');
+        if (currentMapBounds && !currentMapBounds.isEmpty()) {
+            globalMap.fitBounds(currentMapBounds);
+        }
+    }
+  };
+
+  function clearMarkers() {
+      globalMarkers.forEach(m => m.map = null);
+      globalMarkers = [];
+  }
+
+  // --- AUTH NAVIGATION LOGIC ---
   const loginNav = document.getElementById("loginNav");
   const signupNav = document.getElementById("signupNav");
   const logoutNav = document.getElementById("logoutNav");
@@ -123,6 +522,7 @@
   const ownerLink = document.getElementById("ownerDashboardLink");
   const adminLink = document.getElementById("adminDashboardLink");
   const messagesLink = document.getElementById("messagesLink");
+  const bookingsLink = document.getElementById("myBookingsLink");
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
@@ -133,17 +533,17 @@
 
       ownerLink.style.display = "none";
       adminLink.style.display = "none";
-      messagesLink.style.display = "none"; // hide messages
-
+      messagesLink.style.display = "none"; 
+      bookingsLink.style.display = "none";
       return;
     }
 
-    // user is logged in (normal / owner / admin)
     loginNav.style.display = "none";
     signupNav.style.display = "none";
-    logoutNav.style.display = "";
+    logoutNav.style.display = "inline-block";
     meProfileLink.style.display = "flex";
-    messagesLink.style.display = "inline-block"; // NORMAL USER ALSO CAN SEE
+    messagesLink.style.display = "inline-block"; 
+    bookingsLink.style.display = "inline-block";
 
     ownerLink.style.display = "none";
     adminLink.style.display = "none";
@@ -154,45 +554,83 @@
       navName.textContent = u.name || user.email.split("@")[0];
       navAvatar.src = u.photoBase64 || u.photoURL || navAvatar.src;
 
-      if (u.role === "owner") {
-        ownerLink.style.display = "inline-block";
-      }
-
-      if (u.role === "admin") {
-        adminLink.style.display = "inline-block";
-        // REMOVED: ownerLink.style.display = "inline-block";  <-- Logic removed here
-      }
+      if (u.role === "owner") ownerLink.style.display = "inline-block";
+      if (u.role === "admin") adminLink.style.display = "inline-block";
     }
   });
 
-  logoutNav.onclick = async () => {
+  logoutNav.onclick = async (e) => {
+    e.preventDefault();
     await signOut(auth);
     location.href = "login.html";
   };
 
+  // --- CARD & RATING RENDER LOGIC ---
   function createCard(p) {
-    const img = p.imageBase64 || p.photoURL || "https://via.placeholder.com/300";
+    const img = p.photoURL || p.imageBase64 || "https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=2070&auto=format&fit=crop";
     return `
-      <div class="property-card" onclick="window.location.href='property.html?id=${p.id}'" style="cursor:pointer;">
-        <img src="${img}">
+      <div class="property-card" onclick="window.location.href='property.html?id=${p.id}'">
+        <img src="${img}" alt="Property Image">
         <div class="property-content">
           <div class="property-title">${p.title}</div>
-          <div class="property-meta">${p.city} ${p.nearbyCollege ? "• " + p.nearbyCollege : ""}</div>
-          <div class="price">₹${p.rent}</div>
-          <button class="btn-primary" style="margin-top:10px; width:100%;">View Details</button>
+          <div class="property-meta">
+             📍 ${p.city} ${p.nearbyCollege ? "• 🎓 " + p.nearbyCollege : ""}
+          </div>
+          
+          <div id="rating-${p.id}" class="rating-badge" style="display:none;">
+             ★ <span class="score">--</span> <span class="rating-count" style="font-weight:400; color:#78716c; margin-left:4px;">()</span>
+          </div>
+
+          <div class="price">₹${p.rent}<span style="font-size:14px; color:#64748b; font-weight:500;"> /mo</span></div>
+          <button class="btn-primary" style="width:100%; margin-top:10px;">View Details</button>
         </div>
       </div>
     `;
   }
 
-  async function runSearch() {
+  async function loadRating(propertyId) {
+      try {
+          const q = query(collection(db, "reviews"), where("propertyId", "==", propertyId));
+          const snap = await getDocs(q);
+          if(!snap.empty) {
+              let total = 0;
+              snap.forEach(doc => total += doc.data().rating);
+              const avg = (total / snap.size).toFixed(1);
+              
+              const badge = document.getElementById(`rating-${propertyId}`);
+              if(badge) {
+                  badge.style.display = "inline-flex";
+                  badge.querySelector(".score").textContent = avg;
+                  badge.querySelector(".rating-count").textContent = `(${snap.size} reviews)`;
+              }
+          } else {
+               const badge = document.getElementById(`rating-${propertyId}`);
+               if(badge) {
+                   badge.style.display = "inline-flex";
+                   badge.style.background = "rgba(239, 246, 255, 0.7)"; 
+                   badge.style.color = "#2563eb";
+                   badge.style.border = "1px solid rgba(191, 219, 254, 0.5)";
+                   badge.innerHTML = "✨ New Arrival";
+               }
+          }
+      } catch(e) { console.error("Rating error", e); }
+  }
+
+  // --- SEARCH & MAP PLACEMENT LOGIC ---
+  window.runSearch = async function() {
     const list = document.getElementById("featuredList");
     const msg = document.getElementById("resultsMessage");
+    
+    // Capture all filters
     const loc = document.getElementById("locationInput").value.trim().toLowerCase();
+    const typeFilter = document.getElementById("typeInput").value;
+    const genderFilter = document.getElementById("genderInput").value;
+    const maxRentFilter = Number(document.getElementById("maxRentInput").value) || Infinity;
 
     list.innerHTML = "";
-    if (!loc) { msg.textContent = "Please enter a city."; return; }
-    msg.textContent = "Searching...";
+    clearMarkers();
+    
+    msg.textContent = "Curating the best stays for you...";
 
     const q = query(collection(db, "properties"), orderBy("createdAt", "desc"), limit(50));
     const snap = await getDocs(q);
@@ -200,18 +638,72 @@
 
     snap.forEach(d => {
       const p = d.data(); p.id = d.id;
-      if (p.city?.toLowerCase().includes(loc) && p.status === "active") results.push(p);
+      
+      // Apply all UI filters seamlessly
+      let match = true;
+      if (loc && !p.city?.toLowerCase().includes(loc)) match = false;
+      if (p.status !== "active") match = false;
+      if (typeFilter && p.type !== typeFilter) match = false;
+      if (genderFilter && p.forGender !== genderFilter) match = false;
+      if (p.rent > maxRentFilter) match = false;
+
+      if (match) results.push(p);
     });
 
-    if (!results.length) { msg.textContent = "No properties found."; return; }
+    if (!results.length) { 
+        msg.textContent = "No properties found matching your criteria. Try adjusting your filters!"; 
+        return; 
+    }
+    
     msg.textContent = "";
+    
+    // 1. Render Grid List
     list.innerHTML = results.map(createCard).join("");
-  }
+    results.forEach(p => loadRating(p.id));
 
-  document.getElementById("searchForm").onsubmit = (e) => { e.preventDefault(); runSearch(); };
+    // 2. Render Map Markers
+    currentMapBounds = new google.maps.LatLngBounds();
+    
+    results.forEach(p => {
+        if (p.lat && p.lng && globalMap) {
+            const pos = { lat: p.lat, lng: p.lng };
+            currentMapBounds.extend(pos);
+
+            const marker = new google.maps.marker.AdvancedMarkerElement({
+                position: pos,
+                map: globalMap,
+                title: p.title
+            });
+
+            // Clean, Glassmorphism-style Info Window
+            marker.addListener("click", () => {
+                const img = p.photoURL || p.imageBase64 || "https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=2070&auto=format&fit=crop";
+                const content = `
+                    <div style="font-family: 'Outfit', sans-serif; padding: 5px; width: 220px;">
+                        <img src="${img}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 12px; margin-bottom: 10px;">
+                        <h4 style="margin: 0 0 5px 0; font-size: 16px; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.title}</h4>
+                        <div style="color: #2563eb; font-weight: 700; font-size: 18px; margin-bottom: 10px;">₹${p.rent}<span style="font-size:12px; color:#64748b; font-weight:500;">/mo</span></div>
+                        <a href="property.html?id=${p.id}" style="display: block; text-align: center; background: #2563eb; color: white; text-decoration: none; padding: 8px; border-radius: 8px; font-weight: 600; font-size: 14px; transition: 0.3s;">View Details</a>
+                    </div>
+                `;
+                infoWindow.setContent(content);
+                infoWindow.open({ anchor: marker, map: globalMap });
+            });
+
+            globalMarkers.push(marker);
+        }
+    });
+
+    if (globalMap && !currentMapBounds.isEmpty()) {
+        globalMap.fitBounds(currentMapBounds);
+    }
+  };
+
+  document.getElementById("searchForm").onsubmit = (e) => { e.preventDefault(); window.runSearch(); };
+  
   document.getElementById("clearBtn").onclick = () => {
     document.getElementById("searchForm").reset();
-    document.getElementById("featuredList").innerHTML = "";
+    window.runSearch(); // Re-run to show all properties again
   };
 </script>
 
