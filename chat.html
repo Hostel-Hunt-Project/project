@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8" />
   <title>Chat – High-End Stays</title>
-  <!-- INVISIBLE FIX: Added viewport-fit=cover for modern phones -->
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,10 +10,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* ========================================
-      GLASSMORPHISM & ELEGANT DESIGN SYSTEM 
-      ========================================
-    */
     :root {
       --primary: #2563eb;
       --primary-hover: #1d4ed8;
@@ -32,7 +27,6 @@
       color: var(--text-main);
       background: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop') no-repeat center center fixed;
       background-size: cover;
-      /* INVISIBLE FIX: 100dvh + overscroll prevents keyboard overlapping and screen bouncing */
       height: 100dvh;
       display: flex;
       flex-direction: column;
@@ -59,7 +53,6 @@
       border-radius: 20px;
     }
 
-    /* --- Header Navigation --- */
     header {
       flex-shrink: 0;
       margin: 15px 20px;
@@ -95,13 +88,12 @@
     #logoutBtn { color: #ef4444; font-weight: 600; }
     #logoutBtn:hover { color: #dc2626; }
 
-    /* --- Chat Container --- */
     .chat-wrapper {
       flex: 1;
       display: flex;
       justify-content: center;
       padding: 0 20px 20px;
-      overflow: hidden; /* prevents wrapper scrolling */
+      overflow: hidden;
     }
 
     .chat-container {
@@ -112,7 +104,6 @@
       overflow: hidden;
     }
 
-    /* --- Chat Header --- */
     .chat-header {
       padding: 15px 25px;
       display: flex;
@@ -146,7 +137,7 @@
     .status {
       font-size: 13px;
       font-weight: 600;
-      color: #10b981; /* Emerald green for typing */
+      color: #10b981;
       animation: pulse 1.5s infinite;
     }
 
@@ -156,7 +147,6 @@
       100% { opacity: 0.6; }
     }
 
-    /* --- Chat Body (Messages) --- */
     .chat-body {
       flex: 1;
       padding: 20px 25px;
@@ -167,7 +157,6 @@
       scroll-behavior: smooth;
     }
 
-    /* Custom Scrollbar for chat body */
     .chat-body::-webkit-scrollbar { width: 6px; }
     .chat-body::-webkit-scrollbar-track { background: transparent; }
     .chat-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
@@ -212,10 +201,9 @@
       color: var(--text-muted);
       padding: 40px 20px;
       font-size: 15px;
-      margin: auto; /* Centers in flex container */
+      margin: auto; 
     }
 
-    /* --- Chat Input --- */
     .chat-input {
       padding: 20px 25px;
       border-top: 1px solid rgba(0,0,0,0.08);
@@ -269,7 +257,6 @@
       .chat-wrapper { padding: 0 10px 10px; }
       .message { max-width: 85%; }
       .chat-header { padding: 15px; }
-      /* INVISIBLE FIX: Accounts for iPhone home bar area in the input box */
       .chat-input { padding: 15px 15px calc(15px + env(safe-area-inset-bottom)); }
     }
   </style>
@@ -313,20 +300,13 @@
   import { auth, db } from "./firebase.js"; 
   import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
   import {
-    collection,
-    doc,
-    getDoc,
-    setDoc,
-    query,
-    onSnapshot,
-    orderBy,
-    addDoc,
-    serverTimestamp,
-    updateDoc
+    collection, doc, getDoc, setDoc, query, onSnapshot,
+    orderBy, addDoc, serverTimestamp, updateDoc
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+  // Accept 'otherId' from the inbox, or fallback to 'ownerId' from a new property inquiry
   const params = new URLSearchParams(window.location.search);
-  const ownerId = params.get("ownerId");
+  const chatPartnerId = params.get("otherId") || params.get("ownerId");
   const propertyId = params.get("propertyId");
 
   const messagesDiv = document.getElementById("messages");
@@ -350,7 +330,6 @@
   });
 
   function scrollToBottom() { 
-      // Slight delay to ensure DOM is updated before scrolling
       setTimeout(() => {
           messagesDiv.scrollTop = messagesDiv.scrollHeight; 
       }, 50);
@@ -363,7 +342,6 @@
     const meta = document.createElement("div");
     meta.className = "meta";
     
-    // Improved time formatting
     let timeStr = "";
     if (m.time?.toDate) {
         timeStr = m.time.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -392,23 +370,27 @@
     if (!user) return location.href = "login.html";
     currentUser = user;
 
-    if (!ownerId || !propertyId) {
+    if (!chatPartnerId || !propertyId) {
        return location.href = "inbox.html";
     }
 
-    // 1. Load Owner Details
+    // Load Other User's Details
     try {
-      const ownerSnap = await getDoc(doc(db, "users", ownerId));
-      const owner = ownerSnap.exists() ? ownerSnap.data() : {};
-      otherName.textContent = owner.name || owner.email || "Owner";
-      if(owner.photoURL || owner.photoBase64) {
-          otherAvatar.src = owner.photoBase64 || owner.photoURL;
+      const partnerSnap = await getDoc(doc(db, "users", chatPartnerId));
+      const partner = partnerSnap.exists() ? partnerSnap.data() : {};
+      otherName.textContent = partner.name || partner.email.split("@")[0] || "User";
+      
+      // Use their photo, or generate a placeholder based on their name
+      if(partner.photoURL || partner.photoBase64) {
+          otherAvatar.src = partner.photoBase64 || partner.photoURL;
+      } else {
+          otherAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(otherName.textContent)}&background=e0f2fe&color=0369a1&rounded=true&bold=true`;
       }
     } catch (err) {
       otherName.textContent = "Chat";
     }
 
-    // 2. Load Property Title
+    // Load Property Title
     try {
       const pSnap = await getDoc(doc(db, "properties", propertyId));
       if (pSnap.exists()) {
@@ -420,15 +402,15 @@
       }
     } catch (err) { /* ignore */ }
 
-    // 3. Setup Chat Document
-    const chatId = makeChatId(currentUser.uid, ownerId, propertyId);
+    // Setup Chat Document
+    const chatId = makeChatId(currentUser.uid, chatPartnerId, propertyId);
     chatDocRef = doc(db, "chats", chatId);
 
     const chatSnap = await getDoc(chatDocRef);
     if (!chatSnap.exists()) {
       await setDoc(chatDocRef, {
-        participants: [currentUser.uid, ownerId],
-        ownerId: ownerId, 
+        participants: [currentUser.uid, chatPartnerId],
+        ownerId: params.get("ownerId") || chatPartnerId, 
         propertyId: propertyId,
         propertyTitle: propTitle,
         createdAt: serverTimestamp(),
@@ -437,7 +419,7 @@
       });
     }
 
-    // 4. Subscribe to Messages
+    // Subscribe to Messages
     const msgsRef = collection(db, "chats", chatId, "messages");
     const q = query(msgsRef, orderBy("time", "asc"));
 
@@ -454,7 +436,7 @@
       scrollToBottom();
     });
 
-    // 5. Typing Indicator
+    // Typing Indicator
     onSnapshot(chatDocRef, (d) => {
       const data = d.data();
       if (!data) return;
@@ -465,29 +447,40 @@
     });
   });
 
-  // Typing Logic
+  let isTyping = false;
   let typingTimeoutHandle = null;
+
   async function setTyping(flag) {
     if (!chatDocRef || !currentUser) return;
+    if (isTyping === flag) return; 
+    
+    isTyping = flag;
     try {
-      await updateDoc(chatDocRef, { ["typing." + currentUser.uid]: flag ? true : false });
-      if (typingTimeoutHandle) clearTimeout(typingTimeoutHandle);
-      if (flag) {
-        typingTimeoutHandle = setTimeout(() => setTyping(false), 2000);
-      }
-    } catch (err) { /* ignore */ }
+      await updateDoc(chatDocRef, { ["typing." + currentUser.uid]: flag });
+    } catch (err) { console.error("Typing indicator error:", err); }
   }
 
-  sendBtn.addEventListener("click", sendMessage);
   textInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-    else { setTyping(true); }
+    if (e.key === "Enter" && !e.shiftKey) { 
+        e.preventDefault(); 
+        sendMessage(); 
+    } else { 
+        setTyping(true);
+        if (typingTimeoutHandle) clearTimeout(typingTimeoutHandle);
+        typingTimeoutHandle = setTimeout(() => setTyping(false), 2000);
+    }
   });
+  
+  sendBtn.addEventListener("click", sendMessage);
 
   async function sendMessage() {
     const text = textInput.value.trim();
     if (!text) return;
     if (!chatDocRef) return alert("Chat not ready.");
+
+    textInput.value = "";
+    setTyping(false);
+    textInput.focus();
 
     const msgsRef = collection(db, "chats", chatDocRef.id, "messages");
     const msg = {
@@ -504,11 +497,9 @@
           lastUpdated: serverTimestamp(),
           propertyTitle: propTitle 
       });
-      textInput.value = "";
-      setTyping(false);
-      textInput.focus();
     } catch (err) {
       console.error("Send failed", err);
+      alert("Failed to send message. Please check your connection.");
     }
   }
 </script>
