@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Bookings – High-End Stays</title>
+  <!-- INVISIBLE FIX: Added viewport-fit=cover for modern phones -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ========================================
+      GLASSMORPHISM & ELEGANT DESIGN SYSTEM 
+      ========================================
+    */
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --text-main: #1e293b;
+      --text-muted: #475569;
+      --glass-bg: rgba(255, 255, 255, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.5);
+      --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      color: var(--text-main);
+      background: url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(226, 232, 240, 0.6) 100%);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: -1;
+    }
+
+    .glass-panel {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      border-radius: 20px;
+    }
+
+    /* --- Header Navigation --- */
+    header {
+      position: sticky;
+      top: 15px;
+      margin: 0 20px 30px 20px;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 30px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: 50px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+      text-decoration: none;
+    }
+
+    nav a {
+      color: var(--text-main);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 15px;
+      transition: color 0.3s;
+      margin-left: 20px;
+    }
+    nav a:hover { color: var(--primary); }
+    
+    #logoutBtn { color: #ef4444; font-weight: 600; }
+    #logoutBtn:hover { color: #dc2626; }
+
+    /* --- Container & Layout --- */
+    .container {
+      max-width: 900px;
+      margin: 0 auto 60px;
+      padding: 0 20px;
+    }
+
+    .page-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    /* --- Booking Cards --- */
+    .booking-card {
+      padding: 24px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .booking-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+      background: rgba(255,255,255,0.85);
+    }
+
+    .booking-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      padding-bottom: 16px;
+    }
+
+    .property-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+
+    .status-badge {
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
+    }
+    .status-pending { background: rgba(255, 237, 213, 0.8); color: #c2410c; border: 1px solid rgba(253, 186, 116, 0.5); }
+    .status-confirmed { background: rgba(220, 252, 231, 0.8); color: #15803d; border: 1px solid rgba(134, 239, 172, 0.5); }
+    .status-rejected { background: rgba(254, 226, 226, 0.8); color: #991b1b; border: 1px solid rgba(252, 165, 165, 0.5); }
+
+    .booking-body {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+    }
+
+    .info-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .info-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .info-value {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-main);
+    }
+    .info-price {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .booking-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* --- Buttons --- */
+    .btn, .btn-primary, .btn-pay {
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 14px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .btn {
+      background: rgba(255, 255, 255, 0.8);
+      color: var(--text-main);
+      border: 1px solid var(--glass-border);
+    }
+    .btn:hover { background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+    .btn-pay {
+      background: #10b981; /* Emerald green for payments */
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+    .btn-pay:hover {
+      background: #059669;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    /* --- QR Code Modal/Box --- */
+    .qr-box {
+      display: none; 
+      margin-top: 20px; 
+      padding: 20px; 
+      background: rgba(255,255,255,0.5); 
+      border: 1px solid var(--glass-border); 
+      border-radius: 16px; 
+      text-align: center;
+      grid-column: 1 / -1; /* Spans full width of the grid */
+    }
+    .qr-img { 
+      width: 160px; 
+      height: 160px; 
+      mix-blend-mode: multiply; 
+      border-radius: 10px;
+      margin: 10px 0;
+    }
+    .qr-link {
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .qr-link:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      header { flex-direction: column; gap: 15px; border-radius: 20px; padding: 15px; }
+      nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+      nav a { margin-left: 0; }
+      .booking-header { flex-direction: column; gap: 10px; }
+      .booking-footer { justify-content: stretch; }
+      .booking-footer > * { flex: 1; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo">Hostel Hunt</a>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="inbox.html">Messages</a>
+    <a href="#" id="logoutBtn">Logout</a>
+  </nav>
+</header>
+
+<div class="container">
+  <h2 class="page-title">📅 My Bookings & Payments</h2>
+  <div id="loading" style="text-align:center; color:var(--text-muted); margin-top:40px; font-size:16px;">
+    Loading your dashboard...
+  </div>
+  <div id="bookingList"></div>
+</div>
+
+<script type="module">
+  import { auth, db } from "./firebase.js"; 
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import { collection, query, where, getDocs, orderBy, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const list = document.getElementById("bookingList");
+  const loading = document.getElementById("loading");
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { location.href = "login.html"; return; }
+    loadUserBookings(user.uid);
+  });
+
+  async function loadUserBookings(uid) {
+    const q = query(collection(db, "bookings"), where("studentId", "==", uid), orderBy("createdAt", "desc"));
+
+    try {
+        const snap = await getDocs(q);
+        loading.style.display = "none";
+
+        if (snap.empty) {
+            list.innerHTML = `
+              <div class="glass-panel" style="text-align:center; padding:50px 20px;">
+                <h3 style="color:#0f172a; margin-bottom:10px;">No bookings found</h3>
+                <p style="color:var(--text-muted); margin-bottom:20px;">You haven't booked any stays yet.</p>
+                <a href="index.html" class="btn-pay" style="background:var(--primary); box-shadow:none;">Explore Properties</a>
+              </div>`;
+            return;
+        }
+
+        list.innerHTML = "";
+        
+        // Use Promise.all to fetch property details (UPI ID) for each booking efficiently
+        const bookings = [];
+        snap.forEach(d => bookings.push({ id: d.id, ...d.data() }));
+
+        for (const b of bookings) {
+            // Fetch Property details to get the UPI ID
+            let upiId = "";
+            if (b.propertyId) {
+                const pSnap = await getDoc(doc(db, "properties", b.propertyId));
+                if (pSnap.exists()) {
+                    upiId = pSnap.data().upiId || "";
+                }
+            }
+
+            let statusClass = "status-pending";
+            if(b.status === "confirmed") statusClass = "status-confirmed";
+            if(b.status === "rejected") statusClass = "status-rejected";
+
+            const dateStr = b.createdAt ? b.createdAt.toDate().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : "Recent";
+            const rentAmount = b.amount || b.rent || 0;
+
+            // --- PAY BUTTON LOGIC ---
+            // Only show Pay button if Confirmed AND we have a valid UPI ID
+            let payBtnHtml = "";
+            let qrBoxHtml = "";
+            
+            if (b.status === "confirmed" && upiId) {
+                const upiLink = `upi://pay?pa=${upiId}&pn=HostelOwner&am=${rentAmount}&cu=INR&tn=Rent_Payment`;
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiLink)}`;
+                
+                payBtnHtml = `
+                    <button class="btn-pay" onclick="window.togglePay('${b.id}', '${upiLink}')">
+                       ⚡ Pay Rent
+                    </button>`;
+                
+                qrBoxHtml = `
+                    <div id="qr-${b.id}" class="qr-box">
+                        <span class="info-label" style="display:block; margin-bottom:5px;">Scan to Pay</span>
+                        <div class="info-price">₹${rentAmount}</div>
+                        <img src="${qrUrl}" class="qr-img" alt="UPI QR Code">
+                        <br>
+                        <a href="${upiLink}" class="qr-link">Open in UPI App (Mobile)</a>
+                    </div>`;
+            } else if (b.status === "confirmed" && !upiId) {
+                payBtnHtml = `<span style="color:var(--text-muted); font-size:13px; font-weight:500; align-self:center;">(Owner UPI not set)</span>`;
+            }
+
+            // --- HTML TEMPLATE INJECTION ---
+            list.innerHTML += `
+              <div class="glass-panel booking-card">
+                 <div class="booking-header">
+                    <div>
+                      <h3 class="property-title">${b.propertyTitle || "Premium Stay"}</h3>
+                    </div>
+                    <span class="status-badge ${statusClass}">${b.status}</span>
+                 </div>
+
+                 <div class="booking-body">
+                    <div class="info-group">
+                      <span class="info-label">Host/Owner</span>
+                      <span class="info-value">${b.ownerName || "Hostel Owner"}</span>
+                    </div>
+                    <div class="info-group">
+                      <span class="info-label">Booking Date</span>
+                      <span class="info-value">${dateStr}</span>
+                    </div>
+                    <div class="info-group">
+                      <span class="info-label">Monthly Rent</span>
+                      <span class="info-price">₹${rentAmount}</span>
+                    </div>
+                    ${qrBoxHtml} 
+                 </div>
+                 
+                 <div class="booking-footer">
+                    <a href="chat.html?ownerId=${b.ownerId}&propertyId=${b.propertyId}" class="btn">
+                      💬 Message Host
+                    </a>
+                    ${payBtnHtml}
+                 </div>
+              </div>
+            `;
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        loading.textContent = "Error loading your dashboard. Please try refreshing.";
+    }
+  }
+
+  // Helper to handle Pay Click
+  window.togglePay = (id, link) => {
+      // If mobile, open link directly
+      if (/Android|iPhone/i.test(navigator.userAgent)) {
+          window.location.href = link;
+      } else {
+          // If desktop, toggle QR code
+          const box = document.getElementById(`qr-${id}`);
+          if (box) box.style.display = box.style.display === "block" ? "none" : "block";
+      }
+  };
+
+  document.getElementById("logoutBtn").onclick = async (e) => { 
+    e.preventDefault();
+    await signOut(auth); 
+    location.href="login.html"; 
+  };
+</script>
+
+</body>
+</html>
